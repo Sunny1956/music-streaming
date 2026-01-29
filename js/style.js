@@ -1,0 +1,18 @@
+const authWrapper = document.querySelector('.auth-wrapper');
+const loginTrigger = document.querySelector('.login-trigger');
+const registerTrigger = document.querySelector('.register-trigger');
+
+registerTrigger.addEventListener('click', (e) => {
+    e.preventDefault();
+    authWrapper.classList.add('toggled');
+});
+
+loginTrigger.addEventListener('click', (e) => {
+    e.preventDefault();
+    authWrapper.classList.remove('toggled');
+});
+
+// 🔥 LOGIN REDIRECT (NO FORM SUBMIT)
+loginBtn.addEventListener('click', () => {
+    window.location.href = "index.html";
+});

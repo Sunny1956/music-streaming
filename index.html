@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melody Stream</title>
+    <script>
+        // Check if the user is logged in. If not, redirect to auth.html immediately.
+        if (localStorage.getItem("isLoggedIn") !== "true") {
+            window.location.href = "auth.html";
+        }
+    </script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;300;400;500;600;700;800;900&family=Dancing+Script:wght@700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined|Material+Icons" rel="stylesheet">
+
+    <style>
+        /* =========================
+           CSS STYLES
+        ========================= */
+        :root {
+            --bg-color: #181818;
+            --sidebar-bg: #181818;
+            --card-bg: #1F1F1F;
+            --text-main: #FFFFFF;
+            --text-muted: #B3B3B3;
+            --accent-pink: #EE10B0;
+            --accent-blue: #0E9EEF;
+            --border-color: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #121212;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-pink);
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background: var(--sidebar-bg);
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            border-right: 2px solid var(--accent-pink);
+            box-shadow: 5px 0 20px rgba(238, 16, 176, 0.1);
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .brand {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #EE10B0, #0E9EEF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-group {
+            margin-bottom: 30px;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            padding-left: 10px;
+            text-transform: uppercase;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            color: var(--text-muted);
+            border-radius: 10px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Active State */
+        .nav-item.active {
+            background: var(--accent-pink);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(238, 16, 176, 0.4);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            padding: 30px 50px 100px;
+        }
+
+        /* PAGE VISIBILITY LOGIC */
+        .page-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* HEADER */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .search-bar {
+            background: #222;
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            width: 400px;
+            border: 1px solid #333;
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: white;
+            margin-left: 10px;
+            width: 100%;
+            outline: none;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 30px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .header-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .header-links a:hover {
+            color: var(--accent-pink);
+        }
+
+        .btn-header {
+            border: 1px solid var(--accent-pink);
+            color: var(--accent-pink);
+            padding: 8px 24px;
+            border-radius: 5px;
+            background: transparent;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-header:hover {
+            background: var(--accent-pink);
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--accent-pink);
+            border: none;
+            padding: 8px 24px;
+            color: white;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            height: 400px;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #181818 35%, rgba(24, 24, 24, 0.4) 60%, rgba(24, 24, 24, 0) 100%),
+                url('assets/images/hero-girl.png');
+            background-size: cover;
+            background-position: center right;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            margin-bottom: 50px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #222;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            line-height: 1.1;
+            z-index: 2;
+        }
+
+        .hero h1 span {
+            color: var(--accent-pink);
+        }
+
+        .hero p {
+            max-width: 500px;
+            color: #ccc;
+            margin-bottom: 30px;
+            font-weight: 400;
+            line-height: 1.6;
+            z-index: 2;
+            font-size: 14px;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 20px;
+            z-index: 2;
+        }
+
+        .btn-outline-blue {
+            border: 1px solid var(--accent-blue);
+            background: transparent;
+            padding: 12px 30px;
+            color: var(--accent-blue);
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* COMMON SECTION STYLES */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            margin-bottom: 20px;
+            margin-top: 40px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .section-title span {
+            color: var(--accent-pink);
+        }
+
+        .view-all {
+            font-size: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        /* GRID CARDS */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+        }
+
+        .music-card {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 12px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .music-card:hover {
+            background: #2a2a2a;
+            transform: translateY(-5px);
+        }
+
+        .music-card img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+        }
+
+        .music-card h4 {
+            font-size: 15px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .music-card p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* WIDE CARDS (GENRES/MOODS) */
+        .wide-card {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 120px;
+            cursor: pointer;
+        }
+
+        .wide-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.3s;
+            filter: brightness(0.6);
+        }
+
+        .wide-card:hover img {
+            transform: scale(1.1);
+            filter: brightness(0.4);
+        }
+
+        .wide-card span {
+            position: absolute;
+            bottom: 10px;
+            left: 15px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 28px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .mood-text {
+            font-family: 'Vazirmatn', sans-serif !important;
+            font-weight: 600;
+            font-size: 16px !important;
+        }
+
+        /* LIST VIEW */
+        .trending-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .trending-row {
+            display: grid;
+            grid-template-columns: 40px 60px 2fr 1.5fr 1fr 1fr 40px;
+            align-items: center;
+            background: #1E1E1E;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .trending-row:hover {
+            background: #252525;
+        }
+
+        .trending-row img {
+            width: 45px;
+            height: 45px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .trending-row .rank {
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+
+        /* ARTIST CIRCLE */
+        .artist-card {
+            background: transparent !important;
+            text-align: center;
+        }
+
+        .artist-card img {
+            border-radius: 50%;
+            aspect-ratio: 1/1;
+        }
+
+        /* VIEW ALL BUTTON */
+        .view-all-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 120px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: 0.3s;
+        }
+
+        .view-all-btn:hover {
+            color: white;
+        }
+
+        .view-all-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .view-all-btn:hover .view-all-circle {
+            background: var(--accent-pink);
+            border-color: var(--accent-pink);
+        }
+
+        /* ALBUM PAGE STYLES */
+        .custom-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .album-banner {
+            background: linear-gradient(100deg, #106690 0%, #062b46 100%);
+            border-radius: 15px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .album-cover {
+            width: 220px;
+            height: 220px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+            object-fit: cover;
+        }
+
+        .album-info {
+            z-index: 2;
+            flex: 1;
+        }
+
+        .album-info h1 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .album-info h1 span {
+            color: var(--accent-pink);
+        }
+
+        .play-all-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent-pink);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            position: absolute;
+            right: 40px;
+            bottom: 40px;
+        }
+
+        .play-icon-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+
+        .play-all-btn:hover .play-icon-circle {
+            background: var(--accent-pink);
+            color: white;
+        }
+
+        /* ARTIST PAGE STYLES */
+        .artist-banner {
+            height: 350px;
+            border-radius: 20px;
+            position: relative;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 60%), url('images/eminem.jpg');
+            background-size: cover;
+            background-position: top;
+            margin-bottom: 40px;
+        }
+
+        .artist-name-large {
+            position: absolute;
+            bottom: 30px;
+            left: 40px;
+            font-size: 80px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* TRACK TABLE */
+        .track-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .track-header {
+            text-align: left;
+            color: #888;
+            font-size: 13px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .track-header th {
+            padding: 15px 10px;
+            font-weight: 500;
+        }
+
+        .track-row {
+            transition: 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .track-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .track-row td {
+            padding: 12px 10px;
+            font-size: 14px;
+            color: #ccc;
+            vertical-align: middle;
+        }
+
+        .track-index {
+            font-weight: 600;
+            width: 40px;
+            text-align: center;
+        }
+
+        .track-title-cell {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .track-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+
+        .track-name {
+            color: white;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .track-artist {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .btn-show-more {
+            background: var(--accent-pink);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+        }
+
+        /* FOOTER */
+        .site-footer {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .footer-col h4 {
+            color: white;
+            margin-bottom: 15px;
+            border-bottom: 2px solid white;
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="sidebar">
+        <div class="brand">
+            <span class="material-icons-outlined">music_note</span> Melody
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-label">Menu</div>
+
+            <div class="nav-item active" id="nav-home" onclick="showPage('home')">
+                <span class="material-icons-outlined">home</span> Home
+            </div>
+
+            <div class="nav-item" id="nav-discover" onclick="showPage('discover')">
+                <span class="material-icons-outlined">explore</span> Discover
+            </div>
+
+            <div class="nav-item" id="nav-album" onclick="showPage('album')">
+                <span class="material-icons-outlined">album</span> Albums
+            </div>
+            <div class="nav-item" id="nav-artists" onclick="showPage('artists')">
+                <span class="material-icons-outlined">mic</span> Artists
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-label">Library</div>
+            <div class="nav-item"><span class="material-icons-outlined">history</span> Recently Added</div>
+            <div class="nav-item"><span class="material-icons-outlined">favorite_border</span> Favorites</div>
+            <div class="nav-item"><span class="material-icons-outlined">queue_music</span> Local Files</div>
+        </div>
+
+        <div class="nav-group" style="margin-top: auto;">
+            <div class="nav-item"><span class="material-icons-outlined">settings</span> Settings</div>
+
+            <div class="nav-item" style="color: #FF4444;" onclick="logout()">
+                <span class="material-icons-outlined">logout</span> Logout
+            </div>
+        </div>
+    </nav>
+
+
+    <main class="main-content">
+
+        <header class="top-header" id="main-header">
+            <div class="search-bar">
+                <span class="material-icons-outlined" style="color: #888;">search</span>
+                <input type="text" placeholder="Search Music, Artists, Albums...">
+            </div>
+            <div class="header-links">
+                <a href="#">About Us</a>
+                <a href="#">Contact</a>
+                <a href="#">Premium</a>
+            </div>
+        </header>
+
+        <div id="page-home" class="page-content active">
+            <section class="hero">
+                <h1>All the <span>Best Songs</span><br>in One Place</h1>
+                <p>On our website, you can access an amazing collection of popular and new songs. Stream your favorite
+                    tracks in high quality.</p>
+                <div class="hero-btns">
+                    <button class="btn-primary" onclick="showPage('discover')">Discover Now</button>
+                    <button class="btn-outline-blue">Create Playlist</button>
+                </div>
+            </section>
+
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Weekly Top <span>Songs</span></h2>
+                    <span class="view-all">View All</span>
+                </div>
+                <div class="grid-cards">
+                    <div class="music-card"><img src="assets/images/imagine-dragons.png">
+                        <h4>Whatever It Takes</h4>
+                        <p>Imagine Dragons</p>
+                    </div>
+                    <div class="music-card"><img src="assets/images/skyfall-1.png">
+                        <h4>Skyfall</h4>
+                        <p>Adele</p>
+                    </div>
+                    <div class="music-card"><img src="assets/images/eminem.png">
+                        <h4>Superman</h4>
+                        <p>Eminem</p>
+                    </div>
+                    <div class="music-card"><img src="assets/images/softcore.png">
+                        <h4>Softcore</h4>
+                        <p>The Neighbourhood</p>
+                    </div>
+                    <div class="music-card"><img src="assets/images/the-loneliest.png">
+                        <h4>The Loneliest</h4>
+                        <p>Måneskin</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Trending <span>Songs</span></h2>
+                    <span class="view-all">View All</span>
+                </div>
+                <div class="trending-list">
+                    <div class="trending-row">
+                        <span class="rank">#1</span>
+                        <img src="assets/images/softcore.png">
+                        <div style="margin-left:15px;">
+                            <h4>Softcore</h4>
+                            <p style="color:#888; font-size:12px;">The Neighbourhood</p>
+                        </div>
+                        <span>Nov 4, 2023</span><span>Hard to Imagine</span><span>3:26</span>
+                        <span class="material-icons-outlined" style="color:var(--accent-pink);">favorite</span>
+                    </div>
+                    <div class="trending-row">
+                        <span class="rank">#2</span>
+                        <img src="assets/images/skyfall-1.png">
+                        <div style="margin-left:15px;">
+                            <h4>Skyfall Beats</h4>
+                            <p style="color:#888; font-size:12px;">Nightmares</p>
+                        </div>
+                        <span>Oct 26, 2023</span><span>Skyfall</span><span>2:45</span>
+                        <span class="material-icons-outlined">favorite_border</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="page-discover" class="page-content">
+            <section>
+                <div class="section-header" style="margin-top: 0;">
+                    <h2 class="section-title">Music <span>Genres</span></h2>
+                </div>
+                <div class="grid-cards" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                    <div class="wide-card"><img src="assets/images/g1.png"><span>Rap Tracks</span></div>
+                    <div class="wide-card"><img src="assets/images/g2.png"><span>Pop Tracks</span></div>
+                    <div class="wide-card"><img src="assets/images/g3.png"><span>Rock Tracks</span></div>
+                    <div class="view-all-btn">
+                        <div class="view-all-circle"><span class="material-icons">add</span></div><span>View All</span>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Popular <span>Artists</span></h2>
+                </div>
+                <div class="grid-cards" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+                    <div class="music-card artist-card" onclick="showPage('artists')"><img
+                            src="assets/images/eminem.png">
+                        <h4>Eminem</h4>
+                    </div>
+                    <div class="music-card artist-card"><img src="assets/images/d2.png">
+                        <h4>The Weeknd</h4>
+                    </div>
+                    <div class="music-card artist-card"><img src="assets/images/d3.png">
+                        <h4>Adele</h4>
+                    </div>
+                    <div class="music-card artist-card"><img src="assets/images/d4.png">
+                        <h4>Lana Del Rey</h4>
+                    </div>
+                    <div class="view-all-btn">
+                        <div class="view-all-circle"><span class="material-icons">add</span></div><span>View All</span>
+                    </div>
+                </div>
+            </section>
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Mood <span>Playlist</span></h2>
+                </div>
+                <div class="grid-cards" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
+                    <div class="wide-card"><img src="assets/images/m1.png"><span class="mood-text">Sad Playlist</span>
+                    </div>
+                    <div class="wide-card"><img src="assets/images/m2.png"><span class="mood-text">Chill Playlist</span>
+                    </div>
+                    <div class="wide-card"><img src="assets/images/m3.png"><span class="mood-text">Workout
+                            Playlist</span></div>
+                    <div class="wide-card"><img src="assets/images/m4.png"><span class="mood-text">Love Playlist</span>
+                    </div>
+                    <div class="wide-card"><img src="assets/images/m5.png"><span class="mood-text">Happy Playlist</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="page-album" class="page-content">
+            <div class="custom-header">
+                <span class="material-icons back-btn" onclick="showPage('home')">arrow_back</span>
+                <div class="header-links">
+                    <a href="#">Share</a><a href="#">About</a><a href="#">Premium</a>
+                </div>
+            </div>
+            <div class="album-banner">
+                <img src="assets/images/girl.png" class="album-cover">
+                <div class="album-info">
+                    <h1>Trending songs <span>mix</span></h1>
+                    <p>tate mcrae, nightmares, the neighborhood, doja cat and ...</p>
+                    <div class="album-meta">20 songs &nbsp; • &nbsp; 1h 36m</div>
+                </div>
+                <div class="play-all-btn">Play All <div class="play-icon-circle"><span
+                            class="material-icons">play_arrow</span></div>
+                </div>
+            </div>
+            <table class="track-table">
+                <thead>
+                    <tr class="track-header">
+                        <th style="width: 50px;"></th>
+                        <th></th>
+                        <th>Release Date</th>
+                        <th>Album</th>
+                        <th>Time</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="track-row">
+                        <td class="track-index">1</td>
+                        <td>
+                            <div class="track-title-cell"><img src="assets/images/softcore.png" class="track-img">
+                                <div>
+                                    <div class="track-name">Softcore</div>
+                                    <div class="track-artist">The Neighbourhood</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Nov 4, 2023</td>
+                        <td>Hard to Imagine</td>
+                        <td>3:26</td>
+                        <td><span class="material-icons-outlined">favorite</span></td>
+                    </tr>
+                    <tr class="track-row">
+                        <td class="track-index">2</td>
+                        <td>
+                            <div class="track-title-cell"><img src="assets/images/skyfall.png" class="track-img">
+                                <div>
+                                    <div class="track-name">Skyfall</div>
+                                    <div class="track-artist">Adele</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Oct 20, 2023</td>
+                        <td>Skyfall</td>
+                        <td>4:46</td>
+                        <td><span class="material-icons-outlined">favorite</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="page-artists" class="page-content">
+            <div class="custom-header">
+                <span class="material-icons back-btn" onclick="showPage('home')">arrow_back</span>
+                <div class="header-links">
+                    <a href="#">Share</a><a href="#">About</a><a href="#">Premium</a>
+                </div>
+            </div>
+            <div class="artist-banner">
+                <div class="artist-name-large">Eminem</div>
+            </div>
+            <section>
+                <div class="section-title" style="margin-bottom: 20px;">Popular</div>
+                <table class="track-table">
+                    <thead>
+                        <tr class="track-header">
+                            <th style="width: 40px;"></th>
+                            <th></th>
+                            <th>Release Date</th>
+                            <th>Played</th>
+                            <th>Time</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="track-row">
+                            <td class="track-index">1</td>
+                            <td>
+                                <div class="track-title-cell"><img src="assets/images/d1.png" class="track-img">
+                                    <div>
+                                        <div class="track-name">Without Me</div>
+                                        <div class="track-artist">Eminem</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>May 15, 2002</td>
+                            <td>21,215,618</td>
+                            <td>4:50</td>
+                            <td><span class="material-icons-outlined">favorite</span></td>
+                        </tr>
+                        <tr class="track-row">
+                            <td class="track-index">2</td>
+                            <td>
+                                <div class="track-title-cell"><img src="assets/images/eminem.png" class="track-img">
+                                    <div>
+                                        <div class="track-name">Mockingbird</div>
+                                        <div class="track-artist">Eminem</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Apr 25, 2005</td>
+                            <td>19,856,112</td>
+                            <td>4:10</td>
+                            <td><span class="material-icons-outlined">favorite</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn-show-more">Show More</button>
+            </section>
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Artist's <span>Albums</span></h2>
+                </div>
+                <div class="grid-cards" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+                    <div class="music-card"><img src="https://placehold.co/150x150/333/FFF?text=Show">
+                        <h4>The Eminem Show</h4>
+                        <p>2002</p>
+                    </div>
+                    <div class="music-card"><img src="https://placehold.co/150x150/333/FFF?text=Encore">
+                        <h4>Encore</h4>
+                        <p>2004</p>
+                    </div>
+                    <div class="view-all-btn">
+                        <div class="view-all-circle"><span class="material-icons">add</span></div><span>View All</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="site-footer">
+            <div class="footer-col" style="flex: 2;">
+                <div class="brand" style="font-size: 24px;">Melody</div>
+                <p style="max-width: 300px; color: #888; font-size: 12px; margin-top: 10px;">Melodies is a website that
+                    has been created for over 5 years now.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Access</h4>
+                <ul>
+                    <li>Explore</li>
+                    <li>Artists</li>
+                    <li>Playlists</li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Contact</h4>
+                <ul>
+                    <li>About</li>
+                    <li>Policy</li>
+                    <li>Support</li>
+                </ul>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+
+        // REDIRECT LOGIC
+        function logout() {
+            window.location.href = 'auth.html';
+        }
+
+        function showPage(pageId) {
+            // 1. Hide all pages
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // 2. Remove active class from all nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 3. Show the selected page
+            const selectedPage = document.getElementById('page-' + pageId);
+            if (selectedPage) {
+                selectedPage.classList.add('active');
+            }
+
+            // 4. Set the clicked nav item to active
+            const activeNav = document.getElementById('nav-' + pageId);
+            if (activeNav) {
+                activeNav.classList.add('active');
+            }
+
+            // 5. Toggle Header (Hide main header on Album/Artist page to match design)
+            const mainHeader = document.getElementById('main-header');
+            if (pageId === 'album' || pageId === 'artists') {
+                mainHeader.style.display = 'none';
+            } else {
+                mainHeader.style.display = 'flex';
+            }
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // --- 2. FETCH SONGS FROM SERVER (BACKEND) ---
+        async function loadSongs() {
+            try {
+                // Try fetching data from backend if it is running
+                const response = await fetch('/api/songs');
+                if (!response.ok) throw new Error('Backend not connected');
+                
+                const songs = await response.json();
+                const container = document.getElementById('weekly-top');
+                container.innerHTML = ''; // Clear default HTML
+
+                songs.forEach(song => {
+                    const card = `
+                        <div class="music-card">
+                            <img src="${song.cover || 'https://placehold.co/200x200/222/FFF?text=Music'}">
+                            <h4>${song.title}</h4>
+                            <p>${song.artist}</p>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+            } catch (err) {
+                console.log("Server not found, using static HTML.");
+                // Fallback: If server isn't running, it just keeps the static HTML cards already in <body>
+            }
+        }
+
+        // Run when page loads
+        window.onload = function() {
+            loadSongs();
+        };
+    </script>
+
+</body>
+
+</html>
