@@ -2,226 +2,169 @@
 <html lang="en">
 
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Melody Stream - Login & Sign-up</title>
 
-    <script>
-        // 2. Dashboard > Settings > API se sahi details copy karein
-        const SUPABASE_URL = 'https://mmswssnhty...supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1...'; // Ye lambi key hogi
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 
-        // Yahan dhyan dein: direct 'supabase' use karein
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    </script>
+<style>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Melody Stream - Login & Sign-up</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+font-family:'Vazirmatn',sans-serif;
+}
 
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Vazirmatn', sans-serif;
-        }
+body{
+background:#121212;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
+}
 
-        body {
-            background-color: #121212;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
+.auth-container{
+background:#1E1E1E;
+padding:40px;
+border-radius:15px;
+width:100%;
+max-width:400px;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+text-align:center;
+border:1px solid #333;
+}
 
-        .auth-container {
-            background: #1E1E1E;
-            padding: 40px;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            border: 1px solid #333;
-        }
+h2{
+margin-bottom:20px;
+font-size:28px;
+color:#EE10B0;
+}
 
-        h2 {
-            margin-bottom: 20px;
-            font-size: 28px;
-            color: #EE10B0;
-        }
+.input-group{
+margin-bottom:15px;
+text-align:left;
+}
 
-        .input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
+.input-group label{
+display:block;
+font-size:12px;
+color:#aaa;
+margin-bottom:5px;
+}
 
-        .input-group label {
-            display: block;
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 5px;
-        }
+.input-group input{
+width:100%;
+padding:12px;
+background:#2A2A2A;
+border:1px solid #333;
+border-radius:8px;
+color:white;
+outline:none;
+}
 
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            background: #2A2A2A;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: white;
-            outline: none;
-            transition: 0.3s;
-        }
+.input-group input:focus{
+border-color:#EE10B0;
+}
 
-        .input-group input:focus {
-            border-color: #EE10B0;
-        }
+.btn-main{
+width:100%;
+padding:12px;
+background:#EE10B0;
+border:none;
+border-radius:8px;
+color:white;
+cursor:pointer;
+font-weight:bold;
+margin-top:10px;
+font-size:16px;
+}
 
-        .btn-main {
-            width: 100%;
-            padding: 12px;
-            background: #EE10B0;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            font-size: 16px;
-        }
+.btn-main:hover{
+background:#d00e99;
+}
 
-        .btn-main:hover {
-            background: #d00e99;
-        }
+.switch-text{
+margin-top:20px;
+font-size:14px;
+color:#888;
+}
 
-        .switch-text {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #888;
-        }
+.switch-text a{
+color:#0E9EEF;
+cursor:pointer;
+}
 
-        .switch-text a {
-            color: #0E9EEF;
-            text-decoration: none;
-            cursor: pointer;
-        }
+.hidden{
+display:none;
+}
 
-
-        .hidden {
-            display: none;
-        }
-    </style>
+</style>
 </head>
 
 <body>
 
-    <div class="auth-container">
+<div class="auth-container">
+<div id="auth-msg" style="margin-bottom: 15px; font-size: 14px; font-weight: bold; min-height: 20px;"></div>
 
-        <div id="login-form">
-            <h2>Login</h2>
-            <div class="input-group">
-                <label>Email</label>
-                <input type="email" id="login-email" placeholder="Enter your email">
-            </div>
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="login-password" placeholder="Enter your password">
-            </div>
-            <button class="btn-main" onclick="loginUser()">Login</button>
-            <p class="switch-text">Don't have an account? <a onclick="showRegister()">Sign Up</a></p>
-        </div>
+<!-- LOGIN -->
+<div id="login-form">
 
-        <div id="register-form" class="hidden">
-            <h2>Register</h2>
-            <div class="input-group">
-                <label>Username</label>
-                <input type="text" id="reg-name" placeholder="Choose a username">
-            </div>
-            <div class="input-group">
-                <label>Email</label>
-                <input type="email" id="reg-email" placeholder="Enter your email">
-            </div>
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="reg-password" placeholder="Create a password">
-            </div>
-            <button class="btn-main" onclick="registerUser()">Sign Up</button>
-            <p class="switch-text">Already have an account? <a onclick="showLogin()">Login</a></p>
-        </div>
+<h2>Login</h2>
 
-    </div>
+<div class="input-group">
+<label>Email</label>
+<input type="email" id="login-email">
+</div>
 
-    <script>// 1. Supabase Connection Setup
-        // Dashboard > Settings > API se apni details yahan bharein
-        const SUPABASE_URL = 'https://mmswssnhty...supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<div class="input-group">
+<label>Password</label>
+<input type="password" id="login-password">
+</div>
 
-        // SWITCH TABS (Waisa hi rahega)
-        function showRegister() {
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('register-form').classList.remove('hidden');
-        }
-        function showLogin() {
-            document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('login-form').classList.remove('hidden');
-        }
+<button class="btn-main" onclick="loginUser()">Login</button>
 
-        // 2. SUPABASE LOGIN LOGIC
-        async function loginUser() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+<p class="switch-text">
+Don't have an account?
+<a onclick="showRegister()">Sign Up</a>
+</p>
 
-            if (!email || !password) {
-                alert("Please fill all fields");
-                return;
-            }
+</div>
 
-            const { data, error } = await _supabase.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
+<!-- REGISTER -->
+<div id="register-form" class="hidden">
 
-            if (error) {
-                alert("Login Error: " + error.message);
-            } else {
-                localStorage.setItem("isLoggedIn", "true");
-                window.location.href = "index.html"; // Go to Home
-            }
-        }
+<h2>Register</h2>
 
-        // 3. SUPABASE REGISTER LOGIC
-        async function registerUser() {
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
+<div class="input-group">
+<label>Username</label>
+<input type="text" id="reg-name">
+</div>
 
-            if (!email || !password) {
-                alert("Please fill all fields");
-                return;
-            }
+<div class="input-group">
+<label>Email</label>
+<input type="email" id="reg-email">
+</div>
 
-            const { data, error } = await _supabase.auth.signUp({
-                email: email,
-                password: password,
-                options: {
-                    data: { display_name: name } // Name ko metadata mein save karne ke liye
-                }
-            });
+<div class="input-group">
+<label>Password</label>
+<input type="password" id="reg-password">
+</div>
 
-            if (error) {
-                alert("Signup Error: " + error.message);
-            } else {
-                alert("Account Created! Please check your email for confirmation (if enabled).");
-                showLogin();
-            }
-        }
-    </script>
+<button class="btn-main" onclick="registerUser()">Sign Up</button>
+
+<p class="switch-text">
+Already have an account?
+<a onclick="showLogin()">Login</a>
+</p>
+
+</div>
+
+</div>
+
+<script src="js/auth.js"></script>
 
 </body>
-
 </html>

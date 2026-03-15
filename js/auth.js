@@ -1,57 +1,81 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const loginForm = document.getElementById('login-form');
-  const regForm = document.getElementById('register-form');
-  const showLoginBtn = document.getElementById('show-login');
-  const showRegBtn = document.getElementById('show-register');
-  const gHello = document.getElementById('g-hello');
-  const gWelcome = document.getElementById('g-welcome');
-  const card = document.getElementById('material-card');
+/* SWITCH FORMS */
+function showRegister() {
+    document.getElementById("login-form").classList.add("hidden")
+    document.getElementById("register-form").classList.remove("hidden")
+    document.getElementById("auth-msg").innerText = "";
+}
 
-  function show(which) {
-    if (which === 'login') {
-      loginForm.classList.remove('hidden');
-      regForm.classList.add('hidden');
-      card.classList.remove('show-register');
-    } else {
-      regForm.classList.remove('hidden');
-      loginForm.classList.add('hidden');
-      card.classList.add('show-register');
+function showLogin() {
+    document.getElementById("register-form").classList.add("hidden")
+    document.getElementById("login-form").classList.remove("hidden")
+    document.getElementById("auth-msg").innerText = "";
+}
+
+function showMsg(msg, isError=false) {
+    const el = document.getElementById("auth-msg");
+    if (!el) return;
+    el.innerText = msg;
+    el.style.color = isError ? "#FF4444" : "#0E9EEF";
+}
+
+/* REGISTER USER */
+async function registerUser() {
+    const name = document.getElementById("reg-name").value
+    const email = document.getElementById("reg-email").value
+    const password = document.getElementById("reg-password").value
+
+    if (!email || !password || !name) {
+        showMsg("Please fill all fields", true)
+        return
     }
-  }
-  
-  
-  showLoginBtn.addEventListener('click', () => show('login'));
-  showRegBtn.addEventListener('click', () => show('register'));
-  gHello.addEventListener('click', () => show('register'));
-  gWelcome.addEventListener('click', () => show('login'));
 
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(loginForm));
-    const msg = document.getElementById('login-msg');
-    msg.textContent = '';
     try {
-      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(data) });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Login failed');
-      // persist user to localStorage so homepage can show auth state
-      try { localStorage.setItem('melody_user', JSON.stringify(j.user)); } catch (e) { /* ignore */ }
-      msg.textContent = 'Signed in — redirecting...';
-      setTimeout(() => location.href = '/', 700);
-    } catch (err) { msg.textContent = err.message; }
-  });
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.error || "Registration failed");
+        
+        showMsg("Account Created Successfully! Please login.");
+        setTimeout(() => showLogin(), 1500);
+    } catch (err) {
+        showMsg(err.message, true);
+    }
+}
 
-  regForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(regForm));
-    const msg = document.getElementById('reg-msg');
-    msg.textContent = '';
+/* LOGIN USER */
+async function loginUser() {
+    const email = document.getElementById("login-email").value
+    const password = document.getElementById("login-password").value
+
+    if (!email || !password) {
+        showMsg("Please fill all fields", true)
+        return
+    }
+
     try {
-      const r = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(data) });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Registration failed');
-      msg.textContent = 'Account created — you can sign in now';
-      setTimeout(() => show('login'), 900);
-    } catch (err) { msg.textContent = err.message; }
-  });
-});
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || "Login failed");
+
+        // Set auth state
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("melody_user", JSON.stringify(data.user));
+        
+        showMsg("Login Successful! Redirecting...");
+        setTimeout(() => {
+            window.location.href = "index.html"
+        }, 500);
+
+    } catch (err) {
+        showMsg(err.message, true);
+    }
+}

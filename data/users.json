@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": "u_1770336880143",
+    "name": "admin",
+    "email": "admin@gmail.com",
+    "passwordHash": "$2a$08$22LBW1dhdkaWqoJbn.0fmeCsVv1x6HDYBQI7gcUTjZKRWD7LK0DA2"
+  },
+  {
+    "id": "u_1770359190046",
+    "name": "Sunny",
+    "email": "patelsani9342@gmail.com",
+    "passwordHash": "$2a$08$dXoa3rtZ82ABZ2ko9uo.6eKf78CY4TiMiFfNyQye6xY2xWF.BVq3K"
+  },
+  {
+    "id": "u_1773547976523",
+    "name": "test",
+    "email": "test@test.com",
+    "passwordHash": "$2a$08$vzEy52k0tOIPkr2rleJIOeaX8djAyFL1TtHOKzMQ/5eUJOc.kBOLS"
+  },
+  {
+    "id": "u_1773549608942",
+    "name": "testuser",
+    "email": "test@example.com",
+    "passwordHash": "$2a$08$VCwO.fMLOC6S4N6xovWWuuo43gqRLqraAtfrmdd6Us9FvBv/7QfoW"
+  },
+  {
+    "id": "u_1773551553387",
+    "name": "tester_unique",
+    "email": "unique@example.com",
+    "passwordHash": "$2a$08$lMcHqg.okrwERfrPm3We4uhvHEXftsehgqXXV5WPsX4IvmYffLfBG"
+  }
+]
