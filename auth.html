@@ -2,232 +2,226 @@
 <html lang="en">
 
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // 2. Dashboard > Settings > API se sahi details copy karein
+        const SUPABASE_URL = 'https://mmswssnhty...supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1...'; // Ye lambi key hogi
+
+        // Yahan dhyan dein: direct 'supabase' use karein
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Melodystream — Login & Signup</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
-        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Melody Stream - Login & Sign-up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Basic fix if css/style.css is missing or broken */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
         body {
-            font-family: sans-serif;
-            background: #181818;
+            background-color: #121212;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            margin: 0;
         }
 
-        .auth-wrapper {
-            background: #222;
+        .auth-container {
+            background: #1E1E1E;
             padding: 40px;
-            border-radius: 10px;
-            width: 350px;
-            color: white;
-            position: relative;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 1px solid #333;
         }
 
-        .credentials-panel {
-            display: none;
+        h2 {
+            margin-bottom: 20px;
+            font-size: 28px;
+            color: #EE10B0;
         }
 
-        .credentials-panel.active {
-            display: block;
-        }
-
-        .field-wrapper {
+        .input-group {
             margin-bottom: 15px;
-            position: relative;
+            text-align: left;
         }
 
-        .field-wrapper input {
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
             width: 100%;
-            padding: 10px;
-            background: #333;
-            border: none;
+            padding: 12px;
+            background: #2A2A2A;
+            border: 1px solid #333;
+            border-radius: 8px;
             color: white;
-            border-radius: 5px;
-            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
         }
 
-        .submit-button {
+        .input-group input:focus {
+            border-color: #EE10B0;
+        }
+
+        .btn-main {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background: #EE10B0;
             border: none;
+            border-radius: 8px;
             color: white;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
+            cursor: pointer;
             margin-top: 10px;
+            font-size: 16px;
         }
 
-        .switch-link {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 12px;
-            color: #ccc;
+        .btn-main:hover {
+            background: #d00e99;
         }
 
-        .switch-link a {
+        .switch-text {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .switch-text a {
             color: #0E9EEF;
             text-decoration: none;
+            cursor: pointer;
         }
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 
 <body>
-    <div class="auth-wrapper">
 
-        <div class="background-shape"></div>
-        <div class="secondary-shape"></div>
-        <div class="credentials-panel signin">
-            <h2 class="slide-element">Login</h2>
-            <form action="loginForm">
-                <div class="field-wrapper slide-element">
-                    <input type="text" required>
-                    <label for="">Username</label>
-                    <i class="fa-solid fa-user"></i>
-                </div>
+    <div class="auth-container">
 
-                <div class="field-wrapper slide-element">
-                    <input type="password" required>
-                    <label for="">Password</label>
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-
-                <div class="field-wrapper slide-element">
-                    <button class="submit-button" type="button" id="loginBtn" onclick="performLogin()">Login</button>
-
-                    <script>
-                        function performLogin() {
-                            // Save a "key" in the browser memory saying we are logged in
-                            localStorage.setItem("isLoggedIn", "true");
-                            // Then go to the main page
-                            window.location.href = 'index.html';
-                        }
-
-                        // 1. REGISTER FUNCTION
-                        async function register() {
-                            const name = document.querySelector('input[placeholder="Enter Your Name"]').value;
-                            const email = document.querySelector('input[placeholder="Enter Your E-mail"]').value;
-                            const password = document.querySelector('input[placeholder="Enter Your Password"]').value;
-
-                            try {
-                                const response = await fetch('/api/register', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ name, email, password })
-                                });
-
-                                const data = await response.json();
-
-                                if (response.ok) {
-                                    alert("Registration Successful! Please Login.");
-                                    // Switch to Login Tab visually here if you want
-                                } else {
-                                    alert("Error: " + data.error);
-                                }
-                            } catch (error) {
-                                console.error(error);
-                                alert("Registration failed");
-                            }
-                        }
-
-                        // 2. LOGIN FUNCTION
-                        async function login() {
-                            // Note: Make sure your inputs have IDs or select them correctly based on your HTML structure
-                            // Assuming the Login inputs are in the first tab section
-                            const emailInput = document.querySelector('.auth-right .input-group input[type="email"]');
-                            const passwordInput = document.querySelector('.auth-right .input-group input[type="password"]');
-
-                            const email = emailInput.value;
-                            const password = passwordInput.value;
-
-                            try {
-                                const response = await fetch('/api/login', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ email, password })
-                                });
-
-                                const data = await response.json();
-
-                                if (response.ok) {
-                                    // Save user info (but not password) to browser
-                                    localStorage.setItem("user", JSON.stringify(data.user));
-                                    localStorage.setItem("isLoggedIn", "true");
-
-                                    // Redirect to Home
-                                    window.location.href = 'index.html';
-                                } else {
-                                    alert("Login Failed: " + data.error);
-                                }
-                            } catch (error) {
-                                console.error(error);
-                                alert("Server error. Is the node server running?");
-                            }
-                        }
-                    </script>
-                </div>
-
-                <div class="switch-link slide-element">
-                    <p>Don't have an account? <br> <a href="#" class="register-trigger">Sign Up</a></p>
-                </div>
-            </form>
+        <div id="login-form">
+            <h2>Login</h2>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="login-email" placeholder="Enter your email">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="Enter your password">
+            </div>
+            <button class="btn-main" onclick="loginUser()">Login</button>
+            <p class="switch-text">Don't have an account? <a onclick="showRegister()">Sign Up</a></p>
         </div>
 
-        <div class="welcome-section signin">
-            <h2 class="slide-element">WELCOME BACK!</h2>
-        </div>
-
-        <div class="credentials-panel signup">
-            <h2 class="slide-element">Register</h2>
-            <form action="#">
-                <div class="field-wrapper slide-element">
-                    <input type="text" required>
-                    <label for="">Username</label>
-                    <i class="fa-solid fa-user"></i>
-                </div>
-
-                <div class="field-wrapper slide-element">
-                    <input type="email" required>
-                    <label for="">Email</label>
-                    <i class="fa-solid fa-envelope"></i>
-                </div>
-
-                <div class="field-wrapper slide-element">
-                    <input type="password" required>
-                    <label for="">Password</label>
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-
-                <div class="field-wrapper slide-element">
-                    <button class="submit-button" type="submit">Register</button>
-                </div>
-
-                <div class="switch-link slide-element">
-                    <p>Already have an account? <br> <a href="#" class="login-trigger">Sign In</a></p>
-                </div>
-            </form>
-        </div>
-
-        <div class="welcome-section signup">
-            <h2 class="slide-element">WELCOME!</h2>
+        <div id="register-form" class="hidden">
+            <h2>Register</h2>
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="reg-name" placeholder="Choose a username">
+            </div>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="reg-email" placeholder="Enter your email">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="reg-password" placeholder="Create a password">
+            </div>
+            <button class="btn-main" onclick="registerUser()">Sign Up</button>
+            <p class="switch-text">Already have an account? <a onclick="showLogin()">Login</a></p>
         </div>
 
     </div>
 
-    <script src="js/style.js"></script>
+    <script>// 1. Supabase Connection Setup
+        // Dashboard > Settings > API se apni details yahan bharein
+        const SUPABASE_URL = 'https://mmswssnhty...supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // SWITCH TABS (Waisa hi rahega)
+        function showRegister() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+        }
+        function showLogin() {
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        }
+
+        // 2. SUPABASE LOGIN LOGIC
+        async function loginUser() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                alert("Please fill all fields");
+                return;
+            }
+
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                alert("Login Error: " + error.message);
+            } else {
+                localStorage.setItem("isLoggedIn", "true");
+                window.location.href = "index.html"; // Go to Home
+            }
+        }
+
+        // 3. SUPABASE REGISTER LOGIC
+        async function registerUser() {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+
+            if (!email || !password) {
+                alert("Please fill all fields");
+                return;
+            }
+
+            const { data, error } = await _supabase.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: { display_name: name } // Name ko metadata mein save karne ke liye
+                }
+            });
+
+            if (error) {
+                alert("Signup Error: " + error.message);
+            } else {
+                alert("Account Created! Please check your email for confirmation (if enabled).");
+                showLogin();
+            }
+        }
+    </script>
+
 </body>
 
 </html>
