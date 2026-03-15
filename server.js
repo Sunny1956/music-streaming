@@ -51,23 +51,35 @@ app.get('/api/songs', (req, res) => {
 // Simple auth: register and login (demo only, not production-ready)
 const usersFile = path.join(__dirname, 'data', 'users.json');
 
-// Ensure data folder exists
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
-    fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
-}
+// Vercel serverless functions have a read-only filesystem.
+// We use an in-memory fallback so registration persists during the lambda's lifecycle.
+let memoryUsers = [];
+
+// Ensure data folder exists (safe to run locally, fails silently on Vercel)
+try {
+  if (!fs.existsSync(path.join(__dirname, 'data'))) {
+      fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+  }
+} catch (e) {}
 
 app.post('/api/register', (req, res) => {
   const { name, email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
-  let users = [];
-  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8') || '[]'); } catch (e) { users = []; }
+  let users = [...memoryUsers];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8') || '[]'); } catch (e) { }
   if (users.find(u => u.email === email)) return res.status(409).json({ error: 'User already exists' });
 
   const hash = bcrypt.hashSync(password, 8);
   const user = { id: `u_${Date.now()}`, name: name || 'User', email, passwordHash: hash };
   users.push(user);
-  try { fs.writeFileSync(usersFile, JSON.stringify(users, null, 2)); } catch (e) { console.error(e); }
+  
+  memoryUsers = users; // Update fallback
+  
+  try { fs.writeFileSync(usersFile, JSON.stringify(users, null, 2)); } catch (e) {
+      console.warn('Filesystem read-only, using in-memory users for Vercel.');
+  }
+  
   res.json({ ok: true, user: { id: user.id, name: user.name, email: user.email } });
 });
 
@@ -75,15 +87,23 @@ app.post('/api/login', (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
-  let users = [];
-  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8') || '[]'); } catch (e) { users = []; }
+  let users = [...memoryUsers];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8') || '[]'); } catch (e) { }
   const user = users.find(u => u.email === email);
   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  
   const ok = bcrypt.compareSync(password, user.passwordHash || '');
   if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+  
   res.json({ ok: true, user: { id: user.id, name: user.name, email: user.email } });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Avoid port binding conflict in Vercel
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+// Export for Vercel serverless middleware
+module.exports = app;
