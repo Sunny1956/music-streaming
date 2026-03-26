@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Use supabase if available, otherwise local API
-            songs = supabaseSongs.length ? supabaseSongs : (localSongsList || []);
+            songs = [...supabaseSongs, ...(localSongsList || [])];
             
             renderHome(songs);
         } catch (err) {
