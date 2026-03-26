@@ -77,7 +77,8 @@
             background: var(--sidebar-bg);
             padding: 30px 20px;
             position: fixed;
-            height: calc(100vh - 90px); /* Leave room for player */
+            height: calc(100vh - 90px);
+            /* Leave room for player */
             border-right: 2px solid var(--accent-pink);
             box-shadow: 5px 0 20px rgba(238, 16, 176, 0.1);
             z-index: 100;
@@ -699,7 +700,7 @@
             cursor: pointer;
             transition: 0.3s;
         }
-        
+
         .music-player:hover {
             background: #252525;
         }
@@ -789,7 +790,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
             overflow: hidden;
         }
 
@@ -824,7 +825,7 @@
             object-fit: cover;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             margin-bottom: 30px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .large-player-title {
@@ -876,6 +877,69 @@
             font-size: 40px !important;
         }
 
+        /* ABOUT/CONTACT MODAL */
+        .about-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+        }
+        .about-modal-overlay.open {
+            display: flex;
+        }
+        .about-modal {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border: 1px solid rgba(238,16,176,0.3);
+            border-radius: 24px;
+            padding: 50px 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+        .about-modal-close {
+            position: absolute;
+            top: 18px; right: 20px;
+            background: none; border: none;
+            color: #888; font-size: 24px; cursor: pointer;
+            transition: color 0.2s;
+        }
+        .about-modal-close:hover { color: white; }
+        .about-modal-logo {
+            font-size: 36px; font-weight: 800;
+            background: linear-gradient(90deg, #EE10B0, #0E9EEF);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .about-modal-tagline {
+            color: #888; font-size: 14px; margin-bottom: 30px;
+        }
+        .about-modal-body {
+            color: #ccc; font-size: 15px; line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        .about-modal-email {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: rgba(238,16,176,0.1);
+            border: 1px solid rgba(238,16,176,0.4);
+            border-radius: 50px;
+            padding: 12px 24px;
+            color: var(--accent-pink);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+        .about-modal-email:hover {
+            background: var(--accent-pink);
+            color: white;
+        }
     </style>
 </head>
 
@@ -908,20 +972,24 @@
         <div class="nav-group">
             <div class="nav-label">Library</div>
             <div class="nav-item"><span class="material-icons-outlined">history</span> Recently Added</div>
-            <div class="nav-item" id="nav-favorites" onclick="showPage('favorites')"><span class="material-icons-outlined">favorite</span> Favorites</div>
-            <div class="nav-item" id="nav-local" onclick="showPage('local')"><span class="material-icons-outlined">queue_music</span> Local Files</div>
-            
+            <div class="nav-item" id="nav-favorites" onclick="showPage('favorites')"><span
+                    class="material-icons-outlined">favorite</span> Favorites</div>
+            <div class="nav-item" id="nav-local" onclick="showPage('local')"><span
+                    class="material-icons-outlined">queue_music</span> Local Files</div>
+
             <input type="file" id="local-file-input" accept="audio/*" multiple style="display: none;">
-            
+
             <div class="nav-label" style="margin-top: 20px;">Playlists</div>
-            <div class="nav-item" onclick="createPlaylist()"><span class="material-icons-outlined">add</span> Create Playlist</div>
+            <div class="nav-item" onclick="createPlaylist()"><span class="material-icons-outlined">add</span> Create
+                Playlist</div>
             <div id="custom-playlists-container">
                 <!-- Custom playlists added here -->
             </div>
         </div>
 
         <div class="nav-group" style="margin-top: auto; padding-bottom: 30px;">
-            <div class="nav-item" onclick="openSettings()"><span class="material-icons-outlined">settings</span> Settings</div>
+            <div class="nav-item" onclick="openSettings()"><span class="material-icons-outlined">settings</span>
+                Settings</div>
 
             <div class="nav-item" style="color: #FF4444;" onclick="logout()">
                 <span class="material-icons-outlined">logout</span> Logout
@@ -951,16 +1019,17 @@
             <button class="close-player-btn" id="close-large-player">
                 <span class="material-icons">keyboard_arrow_down</span>
             </button>
-            
+
             <div class="large-player-content">
                 <img src="assets/images/softcore.png" class="large-player-cover" id="large-cover">
-                
+
                 <div class="large-player-title" id="large-title">Select a song</div>
                 <div class="large-player-artist" id="large-artist">Artist</div>
-                
+
                 <div class="large-player-controls">
                     <button id="large-prev"><span class="material-icons">skip_previous</span></button>
-                    <button class="large-player-play-btn" id="large-play"><span class="material-icons">play_arrow</span></button>
+                    <button class="large-player-play-btn" id="large-play"><span
+                            class="material-icons">play_arrow</span></button>
                     <button id="large-next"><span class="material-icons">skip_next</span></button>
                 </div>
             </div>
@@ -975,7 +1044,7 @@
             </button>
             <div class="large-player-content" style="padding-top: 20px;">
                 <h2 style="color: white; margin-bottom: 40px; text-align: left;">Settings</h2>
-                
+
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <div style="text-align: left;">
                         <div style="color: white; font-size: 18px; font-weight: bold;">High Quality Audio</div>
@@ -999,9 +1068,11 @@
                     </div>
                     <div><input type="checkbox" style="width: 24px; height: 24px; cursor: pointer;"></div>
                 </div>
-                
+
                 <hr style="border-color: #333; margin-bottom: 30px;">
-                <button style="width: 100%; padding: 15px; background: var(--accent-pink); border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 16px;" onclick="closeSettings()">Save Preferences</button>
+                <button
+                    style="width: 100%; padding: 15px; background: var(--accent-pink); border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 16px;"
+                    onclick="closeSettings()">Save Preferences</button>
             </div>
         </div>
     </div>
@@ -1016,11 +1087,35 @@
                 <input type="text" id="search-input" placeholder="Search Music, Artists, Albums...">
             </div>
             <div class="header-links">
-                <a href="#">About Us</a>
-                <a href="#">Contact</a>
+                <a href="#" onclick="event.preventDefault(); openAboutModal()">About Us</a>
+                <a href="#" onclick="event.preventDefault(); openAboutModal()">Contact</a>
                 <a href="#">Premium</a>
             </div>
         </header>
+
+        <!-- ABOUT / CONTACT MODAL -->
+        <div class="about-modal-overlay" id="about-modal-overlay">
+            <div class="about-modal">
+                <button class="about-modal-close" onclick="closeAboutModal()">
+                    <span class="material-icons">close</span>
+                </button>
+                <div class="about-modal-logo">
+                    <span class="material-icons-outlined" style="font-size:36px; vertical-align:middle; margin-right:8px;">music_note</span>Melody Stream
+                </div>
+                <div class="about-modal-tagline">Your music, your world — stream without limits.</div>
+                <div class="about-modal-body">
+                    Melody Stream is a modern music streaming platform built to bring you the best tracks across all genres — pop, rap, rock, jazz, and beyond.
+                    <br><br>
+                    We believe music is for everyone. Whether you're discovering new artists or revisiting old favourites, we've got you covered.
+                    <br><br>
+                    📬 <strong style="color:white;">Reach us for support, feedback, or partnerships:</strong>
+                </div>
+                <a href="mailto:melodystream.official@gmail.com" class="about-modal-email">
+                    <span class="material-icons-outlined">email</span>
+                    melodystream.official@gmail.com
+                </a>
+            </div>
+        </div>
 
         <div id="page-search" class="page-content">
             <section>
@@ -1062,9 +1157,10 @@
                     <h2 class="section-title" style="margin:0;">Local <span>Files</span></h2>
                     <p style="color: #888; margin-top: 5px;">Playing files direct from your computer</p>
                 </div>
-                <button class="btn-primary" onclick="document.getElementById('local-file-input').click()">+ Add Files</button>
+                <button class="btn-primary" onclick="document.getElementById('local-file-input').click()">+ Add
+                    Files</button>
             </div>
-            
+
             <section style="margin-top: 30px;">
                 <table class="track-table">
                     <thead>
@@ -1091,14 +1187,16 @@
                     <a href="#">Share</a><a href="#">Edit Details</a>
                 </div>
             </div>
-            <div class="album-banner" style="background: linear-gradient(-45deg, #111, var(--accent-pink)); height: 300px; padding: 40px; display: flex; align-items: flex-end; border-radius: 20px; box-shadow: inset 0 0 100px rgba(0,0,0,0.5);">
+            <div class="album-banner"
+                style="background: linear-gradient(-45deg, #111, var(--accent-pink)); height: 300px; padding: 40px; display: flex; align-items: flex-end; border-radius: 20px; box-shadow: inset 0 0 100px rgba(0,0,0,0.5);">
                 <div class="album-info" style="margin-left: 0;">
-                    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 12px; margin-bottom: 10px;">Public Playlist</p>
+                    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 12px; margin-bottom: 10px;">
+                        Public Playlist</p>
                     <h1 id="active-playlist-title" style="font-size: 64px; margin: 0; padding: 0;">My Playlist</h1>
                     <div class="album-meta" style="margin-top: 20px;" id="active-playlist-count">0 songs</div>
                 </div>
-                <div class="play-all-btn" style="right: 40px; bottom: 40px;" onclick="playActivePlaylist()">Play All <div class="play-icon-circle"><span
-                            class="material-icons">play_arrow</span></div>
+                <div class="play-all-btn" style="right: 40px; bottom: 40px;" onclick="playActivePlaylist()">Play All
+                    <div class="play-icon-circle"><span class="material-icons">play_arrow</span></div>
                 </div>
             </div>
             <table class="track-table" style="margin-top: 40px;">
@@ -1125,7 +1223,7 @@
                     tracks in high quality.</p>
                 <div class="hero-btns">
                     <button class="btn-primary" onclick="showPage('discover')">Discover Now</button>
-                    <button class="btn-outline-blue">Create Playlist</button>
+                    <button class="btn-outline-blue" onclick="createPlaylist()">Create Playlist</button>
                 </div>
             </section>
 
@@ -1206,6 +1304,7 @@
             <section>
                 <div class="section-header">
                     <h2 class="section-title">Discover <span>Tracks</span></h2>
+                    <span class="view-all" id="discover-view-all" style="cursor:pointer;">View All</span>
                 </div>
                 <div class="grid-cards" id="discover-tracks-grid">
                     <!-- Populated by JS -->
@@ -1268,7 +1367,7 @@
                     <p>tate mcrae, nightmares, the neighborhood, doja cat and ...</p>
                     <div class="album-meta">20 songs &nbsp; • &nbsp; 1h 36m</div>
                 </div>
-                <div class="play-all-btn">Play All <div class="play-icon-circle"><span
+                <div class="play-all-btn" onclick="playAlbum()">Play All <div class="play-icon-circle"><span
                             class="material-icons">play_arrow</span></div>
                 </div>
             </div>
@@ -1287,6 +1386,7 @@
                     <!-- Populated by JS -->
                 </tbody>
             </table>
+            <button class="btn-show-more" id="album-show-more">Show More</button>
         </div>
 
         <div id="page-artists" class="page-content">
@@ -1316,18 +1416,18 @@
                         <!-- Populated by JS -->
                     </tbody>
                 </table>
-                <button class="btn-show-more">Show More</button>
+                <button class="btn-show-more" id="artist-show-more">Show More</button>
             </section>
             <section>
                 <div class="section-header">
                     <h2 class="section-title">Artist's <span>Albums</span></h2>
                 </div>
                 <div class="grid-cards" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
-                    <div class="music-card"><img src="https://placehold.co/150x150/333/FFF?text=Show">
+                    <div class="music-card"><img src="assets/images/eminem-show.png" onerror="this.src='assets/images/eminem.png'">
                         <h4>The Eminem Show</h4>
                         <p>2002</p>
                     </div>
-                    <div class="music-card"><img src="https://placehold.co/150x150/333/FFF?text=Encore">
+                    <div class="music-card"><img src="assets/images/encore.png" onerror="this.src='assets/images/eminem.png'">
                         <h4>Encore</h4>
                         <p>2004</p>
                     </div>
@@ -1355,9 +1455,9 @@
             <div class="footer-col">
                 <h4>Contact</h4>
                 <ul>
-                    <li>About</li>
+                    <li style="cursor:pointer;" onclick="openAboutModal()">About Us</li>
                     <li>Policy</li>
-                    <li>Support</li>
+                    <li><a href="mailto:melodystream.official@gmail.com" style="color:#aaa; text-decoration:none;">melodystream.official@gmail.com</a></li>
                 </ul>
             </div>
         </footer>
@@ -1365,5 +1465,18 @@
     </main>
 
     <script src="js/app.js"></script>
+    <script>
+        function openAboutModal() {
+            document.getElementById('about-modal-overlay').classList.add('open');
+        }
+        function closeAboutModal() {
+            document.getElementById('about-modal-overlay').classList.remove('open');
+        }
+        // Close on backdrop click
+        document.getElementById('about-modal-overlay').addEventListener('click', function(e) {
+            if (e.target === this) closeAboutModal();
+        });
+    </script>
 </body>
+
 </html>

@@ -11,7 +11,7 @@ function showLogin() {
     document.getElementById("auth-msg").innerText = "";
 }
 
-function showMsg(msg, isError=false) {
+function showMsg(msg, isError = false) {
     const el = document.getElementById("auth-msg");
     if (!el) return;
     el.innerText = msg;
@@ -36,9 +36,9 @@ async function registerUser() {
             body: JSON.stringify({ name, email, password })
         });
         const data = await res.json();
-        
+
         if (!res.ok) throw new Error(data.error || "Registration failed");
-        
+
         showMsg("Account Created Successfully! Please login.");
         setTimeout(() => showLogin(), 1500);
     } catch (err) {
@@ -69,7 +69,7 @@ async function loginUser() {
         // Set auth state
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("melody_user", JSON.stringify(data.user));
-        
+
         showMsg("Login Successful! Redirecting...");
         setTimeout(() => {
             window.location.href = "index.html"
