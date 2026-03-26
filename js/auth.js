@@ -33,19 +33,24 @@ async function registerUser() {
 
     showMsg("Creating account...");
 
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: name } }
-    });
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { full_name: name } }
+        });
 
-    if (error) {
-        showMsg(error.message, true);
-        return;
+        if (error) {
+            showMsg(error.message, true);
+            return;
+        }
+
+        showMsg("Account created! Please check your email to confirm, then login.");
+        setTimeout(() => showLogin(), 2000);
+    } catch (err) {
+        showMsg("Network error: " + err.message + ". (Check Supabase Site URL settings!)", true);
+        console.error(err);
     }
-
-    showMsg("Account created! Please check your email to confirm, then login.");
-    setTimeout(() => showLogin(), 2000);
 }
 
 /* LOGIN USER — Supabase Auth */
@@ -60,21 +65,26 @@ async function loginUser() {
 
     showMsg("Logging in...");
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-        showMsg(error.message, true);
-        return;
+        if (error) {
+            showMsg(error.message, true);
+            return;
+        }
+
+        // Store session info
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("melody_user", JSON.stringify({
+            id:    data.user.id,
+            name:  data.user.user_metadata?.full_name || email.split('@')[0],
+            email: data.user.email
+        }));
+
+        showMsg("Login Successful! Redirecting...");
+        setTimeout(() => { window.location.href = "index.html"; }, 500);
+    } catch (err) {
+        showMsg("Network error: " + err.message + ". (Check Supabase Site URL settings!)", true);
+        console.error(err);
     }
-
-    // Store session info
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("melody_user", JSON.stringify({
-        id:    data.user.id,
-        name:  data.user.user_metadata?.full_name || email.split('@')[0],
-        email: data.user.email
-    }));
-
-    showMsg("Login Successful! Redirecting...");
-    setTimeout(() => { window.location.href = "index.html"; }, 500);
 }
