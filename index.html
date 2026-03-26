@@ -966,6 +966,93 @@
             background: var(--accent-pink);
             color: white;
         }
+    
+        /* MOBILE RESPONSIVENESS */
+        .mobile-menu-btn {
+            display: none;
+            color: white;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 2000;
+                bottom: 0;
+                height: 100vh;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+                padding-bottom: 120px;
+            }
+
+            .top-header {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .search-bar {
+                width: 100%;
+                order: 3;
+            }
+
+            .header-links {
+                display: none;
+            }
+
+            .hero {
+                height: auto;
+                padding: 30px 20px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero-btns {
+                flex-direction: column;
+            }
+
+            .trending-row {
+                grid-template-columns: 40px 45px 1fr 40px;
+            }
+
+            .trending-row > *:nth-child(4),
+            .trending-row > *:nth-child(5) {
+                display: none;
+            }
+
+            .music-player {
+                padding: 0 15px;
+            }
+
+            #seek {
+                display: none;
+            }
+            
+            .song-info p {
+                display: none;
+            }
+
+            .large-player-modal {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+
     </style>
 </head>
 
@@ -1108,6 +1195,7 @@
     <main class="main-content">
 
         <header class="top-header" id="main-header">
+            <div class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('show')"><span class="material-icons" style="font-size: 30px;">menu</span></div>
             <div class="search-bar">
                 <span class="material-icons-outlined" style="color: #888;">search</span>
                 <input type="text" id="search-input" placeholder="Search Music, Artists, Albums...">
