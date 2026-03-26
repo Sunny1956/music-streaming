@@ -70,9 +70,25 @@ document.addEventListener('DOMContentLoaded', () => {
     ========================= */
     async function loadSongs() {
         try {
-            const res = await fetch('/api/songs');
-            const data = await res.json();
-            songs = data || [];
+            let supabaseSongs = [];
+            if (typeof supabase !== 'undefined') {
+                const { data, error } = await supabase.from('songs').select('*');
+                if (!error && data && data.length > 0) {
+                    supabaseSongs = data;
+                }
+            }
+            
+            let localSongsList = [];
+            try {
+                const res = await fetch('/api/songs');
+                localSongsList = await res.json();
+            } catch (e) {
+                console.error('Local API fetch failed:', e);
+            }
+
+            // Use supabase if available, otherwise local API
+            songs = supabaseSongs.length ? supabaseSongs : (localSongsList || []);
+            
             renderHome(songs);
         } catch (err) {
             console.error('Failed to load songs:', err);
@@ -323,12 +339,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    window.createPlaylist = function () {
+    window.createPlaylist = async function () {
+        if (typeof supabase === 'undefined') {
+            alert("Supabase not initialized.");
+            return;
+        }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert("Please login first to create playlists.");
+            return;
+        }
+
         const name = "Playlist #" + (customPlaylists.length + 1);
 
+        const { data, error } = await supabase
+            .from('playlists')
+            .insert({ user_id: user.id, name: name })
+            .select()
+            .single();
+
+        if (error || !data) {
+            console.error("Error creating playlist:", error);
+            alert("Failed to create playlist.");
+            return;
+        }
+
         const newPlaylist = {
-            id: 'pl_' + Date.now(),
-            name: name,
+            id: data.id,
+            name: data.name,
             tracks: []
         };
         customPlaylists.push(newPlaylist);
@@ -345,13 +383,13 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPlaylist();
             showPage('playlist');
         };
-        container.appendChild(item);
+        if (container) container.appendChild(item);
 
         alert(`Playlist "${name}" created! To add songs, click the (+) icon that will now appear next to songs in the lists.`);
         renderHome(songs); // re-render to show [+] buttons
     };
 
-    window.addToPlaylist = function (file) {
+    window.addToPlaylist = async function (file) {
         if (!activePlaylistId && customPlaylists.length > 0) {
             activePlaylistId = customPlaylists[0].id;
         } else if (customPlaylists.length === 0) {
@@ -364,13 +402,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const song = songs.find(s => s.file === file);
         if (song && !playlist.tracks.some(t => t.file === file)) {
+            // Add locally first for instant UI
             playlist.tracks.push(song);
             alert(`Added to ${playlist.name}!`);
             renderPlaylist();
+
+            // Save to Supabase
+            if (typeof supabase !== 'undefined') {
+                await supabase.from('playlist_songs').insert({
+                    playlist_id: playlist.id,
+                    song_file: song.file,
+                    song_title: song.title,
+                    song_artist: song.artist || 'Unknown',
+                    song_cover: song.cover || ''
+                });
+            }
         } else {
             alert("Song already in playlist.");
         }
     };
+    
+    async function loadPlaylists() {
+        if (typeof supabase === 'undefined') return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch playlists
+        const { data: playlistsData, error: pError } = await supabase
+            .from('playlists')
+            .select('*')
+            .eq('user_id', user.id);
+            
+        if (!pError && playlistsData) {
+            customPlaylists = playlistsData.map(p => ({
+                id: p.id,
+                name: p.name,
+                tracks: []
+            }));
+
+            // Render sidebar
+            const container = document.getElementById('custom-playlists-container');
+            if (container) container.innerHTML = '';
+            customPlaylists.forEach(playlist => {
+                const item = document.createElement('div');
+                item.className = 'nav-item';
+                item.id = 'nav-' + playlist.id;
+                item.innerHTML = `<span class="material-icons-outlined">queue_music</span> ${playlist.name}`;
+                item.onclick = () => {
+                    activePlaylistId = playlist.id;
+                    document.getElementById('active-playlist-title').textContent = playlist.name;
+                    renderPlaylist();
+                    showPage('playlist');
+                };
+                if (container) container.appendChild(item);
+            });
+
+            // Fetch playlist songs
+            const { data: songsData, error: sError } = await supabase
+                .from('playlist_songs')
+                .select('*');
+                
+            if (!sError && songsData) {
+                // Group songs by playlist_id
+                songsData.forEach(row => {
+                    const playlist = customPlaylists.find(p => p.id === row.playlist_id);
+                    if (playlist) {
+                        playlist.tracks.push({
+                            file: row.song_file,
+                            title: row.song_title,
+                            artist: row.song_artist,
+                            cover: row.song_cover
+                        });
+                    }
+                });
+            }
+        }
+    }
 
     window.renderPlaylist = function () {
         const container = document.getElementById('playlist-track-list');
@@ -682,6 +789,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load user's saved favorites from Supabase
     loadFavorites();
+    
+    // Load user's saved playlists from Supabase
+    loadPlaylists();
 });
 
 // Play all songs from album page (plays first song)
