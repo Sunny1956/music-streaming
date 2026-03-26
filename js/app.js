@@ -30,7 +30,8 @@ window.showPage = function (pageId) {
     window.scrollTo(0, 0);
 };
 
-window.logout = function () {
+window.logout = async function () {
+    if (typeof supabase !== 'undefined') await supabase.auth.signOut();
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("melody_user");
     window.location.href = "auth.html";
@@ -233,19 +234,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* =========================
-       LIBRARY & PLAYLIST LOGIC
+       FAVORITES — Supabase
     ========================= */
-    window.toggleFavorite = function (file) {
-        const index = favorites.findIndex(s => s.file === file);
-        if (index > -1) {
-            favorites.splice(index, 1);
+    async function loadFavorites() {
+        if (typeof supabase === 'undefined') return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data, error } = await supabase
+            .from('favorites').select('*').eq('user_id', user.id);
+        if (!error && data) {
+            favorites = data.map(row => ({
+                file:   row.song_file,
+                title:  row.song_title,
+                artist: row.song_artist,
+                cover:  row.song_cover
+            }));
+            renderHome(songs);
+            renderFavorites();
+        }
+    }
+
+    window.toggleFavorite = async function (file) {
+        const existing = favorites.findIndex(s => s.file === file);
+        if (existing > -1) {
+            favorites.splice(existing, 1);
+            if (typeof supabase !== 'undefined') {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) await supabase.from('favorites').delete()
+                    .eq('user_id', user.id).eq('song_file', file);
+            }
         } else {
             const song = songs.find(s => s.file === file);
-            if (song) favorites.push(song);
+            if (song) {
+                favorites.push(song);
+                if (typeof supabase !== 'undefined') {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) await supabase.from('favorites').upsert({
+                        user_id:     user.id,
+                        song_file:   song.file,
+                        song_title:  song.title,
+                        song_artist: song.artist || 'Unknown',
+                        song_cover:  song.cover || ''
+                    }, { onConflict: 'user_id,song_file' });
+                }
+            }
         }
-        renderHome(songs); // Update main views
-        renderFavorites(); // Update favorites view
+        renderHome(songs);
+        renderFavorites();
     };
+
+    /* =========================
+       PLAYLISTS
+    ========================= */
 
     window.renderFavorites = function () {
         const container = document.getElementById('favorites-track-list');
@@ -632,13 +672,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fetch initial
+    // Fetch initial data
     loadSongs();
 
     // Initialize library features
     setupLocalFiles();
     renderFavorites();
     renderLocalFiles();
+
+    // Load user's saved favorites from Supabase
+    loadFavorites();
 });
 
 // Play all songs from album page (plays first song)

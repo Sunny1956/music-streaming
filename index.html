@@ -881,53 +881,78 @@
         .about-modal-overlay {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.75);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(8px);
             z-index: 9000;
             align-items: center;
             justify-content: center;
         }
+
         .about-modal-overlay.open {
             display: flex;
         }
+
         .about-modal {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            border: 1px solid rgba(238,16,176,0.3);
+            border: 1px solid rgba(238, 16, 176, 0.3);
             border-radius: 24px;
             padding: 50px 40px;
             max-width: 500px;
             width: 90%;
             text-align: center;
             position: relative;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
         }
+
         .about-modal-close {
             position: absolute;
-            top: 18px; right: 20px;
-            background: none; border: none;
-            color: #888; font-size: 24px; cursor: pointer;
+            top: 18px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
             transition: color 0.2s;
         }
-        .about-modal-close:hover { color: white; }
+
+        .about-modal-close:hover {
+            color: white;
+        }
+
         .about-modal-logo {
-            font-size: 36px; font-weight: 800;
+            font-size: 36px;
+            font-weight: 800;
             background: linear-gradient(90deg, #EE10B0, #0E9EEF);
-            -webkit-background-clip: text; background-clip: text;
+            -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
         }
+
         .about-modal-tagline {
-            color: #888; font-size: 14px; margin-bottom: 30px;
-        }
-        .about-modal-body {
-            color: #ccc; font-size: 15px; line-height: 1.8;
+            color: #888;
+            font-size: 14px;
             margin-bottom: 30px;
         }
+
+        .about-modal-body {
+            color: #ccc;
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
         .about-modal-email {
-            display: inline-flex; align-items: center; gap: 10px;
-            background: rgba(238,16,176,0.1);
-            border: 1px solid rgba(238,16,176,0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(238, 16, 176, 0.1);
+            border: 1px solid rgba(238, 16, 176, 0.4);
             border-radius: 50px;
             padding: 12px 24px;
             color: var(--accent-pink);
@@ -936,6 +961,7 @@
             font-size: 15px;
             transition: 0.3s;
         }
+
         .about-modal-email:hover {
             background: var(--accent-pink);
             color: white;
@@ -1100,13 +1126,16 @@
                     <span class="material-icons">close</span>
                 </button>
                 <div class="about-modal-logo">
-                    <span class="material-icons-outlined" style="font-size:36px; vertical-align:middle; margin-right:8px;">music_note</span>Melody Stream
+                    <span class="material-icons-outlined"
+                        style="font-size:36px; vertical-align:middle; margin-right:8px;">music_note</span>Melody Stream
                 </div>
                 <div class="about-modal-tagline">Your music, your world — stream without limits.</div>
                 <div class="about-modal-body">
-                    Melody Stream is a modern music streaming platform built to bring you the best tracks across all genres — pop, rap, rock, jazz, and beyond.
+                    Melody Stream is a modern music streaming platform built to bring you the best tracks across all
+                    genres — pop, rap, rock, jazz, and beyond.
                     <br><br>
-                    We believe music is for everyone. Whether you're discovering new artists or revisiting old favourites, we've got you covered.
+                    We believe music is for everyone. Whether you're discovering new artists or revisiting old
+                    favourites, we've got you covered.
                     <br><br>
                     📬 <strong style="color:white;">Reach us for support, feedback, or partnerships:</strong>
                 </div>
@@ -1423,11 +1452,13 @@
                     <h2 class="section-title">Artist's <span>Albums</span></h2>
                 </div>
                 <div class="grid-cards" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
-                    <div class="music-card"><img src="assets/images/eminem-show.png" onerror="this.src='assets/images/eminem.png'">
+                    <div class="music-card"><img src="assets/images/eminem-show.png"
+                            onerror="this.src='assets/images/eminem.png'">
                         <h4>The Eminem Show</h4>
                         <p>2002</p>
                     </div>
-                    <div class="music-card"><img src="assets/images/encore.png" onerror="this.src='assets/images/eminem.png'">
+                    <div class="music-card"><img src="assets/images/encore.png"
+                            onerror="this.src='assets/images/eminem.png'">
                         <h4>Encore</h4>
                         <p>2004</p>
                     </div>
@@ -1457,13 +1488,16 @@
                 <ul>
                     <li style="cursor:pointer;" onclick="openAboutModal()">About Us</li>
                     <li>Policy</li>
-                    <li><a href="mailto:melodystream.official@gmail.com" style="color:#aaa; text-decoration:none;">melodystream.official@gmail.com</a></li>
+                    <li><a href="mailto:melodystream.official@gmail.com"
+                            style="color:#aaa; text-decoration:none;">melodystream.official@gmail.com</a></li>
                 </ul>
             </div>
         </footer>
 
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/app.js"></script>
     <script>
         function openAboutModal() {
@@ -1473,7 +1507,7 @@
             document.getElementById('about-modal-overlay').classList.remove('open');
         }
         // Close on backdrop click
-        document.getElementById('about-modal-overlay').addEventListener('click', function(e) {
+        document.getElementById('about-modal-overlay').addEventListener('click', function (e) {
             if (e.target === this) closeAboutModal();
         });
     </script>
