@@ -31,7 +31,7 @@ window.showPage = function (pageId) {
 };
 
 window.logout = async function () {
-    if (typeof supabase !== 'undefined') await supabase.auth.signOut();
+    if (typeof window.supabaseClient !== 'undefined') await window.supabaseClient.auth.signOut();
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("melody_user");
     window.location.href = "auth.html";
@@ -71,8 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadSongs() {
         try {
             let supabaseSongs = [];
-            if (typeof supabase !== 'undefined') {
-                const { data, error } = await supabase.from('songs').select('*');
+            if (typeof window.supabaseClient !== 'undefined') {
+                const { data, error } = await window.supabaseClient.from('songs').select('*');
                 if (!error && data && data.length > 0) {
                     supabaseSongs = data;
                 }
@@ -253,10 +253,10 @@ document.addEventListener('DOMContentLoaded', () => {
        FAVORITES — Supabase
     ========================= */
     async function loadFavorites() {
-        if (typeof supabase === 'undefined') return;
-        const { data: { user } } = await supabase.auth.getUser();
+        if (typeof window.supabaseClient === 'undefined') return;
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) return;
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
             .from('favorites').select('*').eq('user_id', user.id);
         if (!error && data) {
             favorites = data.map(row => ({
@@ -274,18 +274,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const existing = favorites.findIndex(s => s.file === file);
         if (existing > -1) {
             favorites.splice(existing, 1);
-            if (typeof supabase !== 'undefined') {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) await supabase.from('favorites').delete()
+            if (typeof window.supabaseClient !== 'undefined') {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (user) await window.supabaseClient.from('favorites').delete()
                     .eq('user_id', user.id).eq('song_file', file);
             }
         } else {
             const song = songs.find(s => s.file === file);
             if (song) {
                 favorites.push(song);
-                if (typeof supabase !== 'undefined') {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) await supabase.from('favorites').upsert({
+                if (typeof window.supabaseClient !== 'undefined') {
+                    const { data: { user } } = await window.supabaseClient.auth.getUser();
+                    if (user) await window.supabaseClient.from('favorites').upsert({
                         user_id:     user.id,
                         song_file:   song.file,
                         song_title:  song.title,
@@ -340,11 +340,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.createPlaylist = async function () {
-        if (typeof supabase === 'undefined') {
+        if (typeof window.supabaseClient === 'undefined') {
             alert("Supabase not initialized.");
             return;
         }
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) {
             alert("Please login first to create playlists.");
             return;
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const name = "Playlist #" + (customPlaylists.length + 1);
 
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
             .from('playlists')
             .insert({ user_id: user.id, name: name })
             .select()
@@ -408,8 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPlaylist();
 
             // Save to Supabase
-            if (typeof supabase !== 'undefined') {
-                await supabase.from('playlist_songs').insert({
+            if (typeof window.supabaseClient !== 'undefined') {
+                await window.supabaseClient.from('playlist_songs').insert({
                     playlist_id: playlist.id,
                     song_file: song.file,
                     song_title: song.title,
@@ -423,12 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     async function loadPlaylists() {
-        if (typeof supabase === 'undefined') return;
-        const { data: { user } } = await supabase.auth.getUser();
+        if (typeof window.supabaseClient === 'undefined') return;
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) return;
 
         // Fetch playlists
-        const { data: playlistsData, error: pError } = await supabase
+        const { data: playlistsData, error: pError } = await window.supabaseClient
             .from('playlists')
             .select('*')
             .eq('user_id', user.id);
@@ -458,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Fetch playlist songs
-            const { data: songsData, error: sError } = await supabase
+            const { data: songsData, error: sError } = await window.supabaseClient
                 .from('playlist_songs')
                 .select('*');
                 

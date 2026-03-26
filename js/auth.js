@@ -34,7 +34,7 @@ async function registerUser() {
     showMsg("Creating account...");
 
     try {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await window.supabaseClient.auth.signUp({
             email,
             password,
             options: { data: { full_name: name } }
@@ -66,7 +66,7 @@ async function loginUser() {
     showMsg("Logging in...");
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
 
         if (error) {
             showMsg(error.message, true);
