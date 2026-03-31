@@ -11,11 +11,6 @@
         if (localStorage.getItem("isLoggedIn") !== "true") {
             window.location.href = "auth.html";
         }
-
-        function logout() {
-            localStorage.removeItem("isLoggedIn")
-            window.location.href = "auth.html"
-        }
     </script>
 
     <link
@@ -1084,7 +1079,7 @@
 
         <div class="nav-group">
             <div class="nav-label">Library</div>
-            <div class="nav-item"><span class="material-icons-outlined">history</span> Recently Added</div>
+            <div class="nav-item" id="nav-recently-added" onclick="showPage('recently-added'); renderRecentlyAdded()"><span class="material-icons-outlined">history</span> Recently Added</div>
             <div class="nav-item" id="nav-favorites" onclick="showPage('favorites')"><span
                     class="material-icons-outlined">favorite</span> Favorites</div>
             <div class="nav-item" id="nav-local" onclick="showPage('local')"><span
@@ -1268,6 +1263,29 @@
             </section>
         </div>
 
+        <div id="page-recently-added" class="page-content">
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Recently <span>Added</span></h2>
+                </div>
+                <table class="track-table">
+                    <thead>
+                        <tr class="track-header">
+                            <th style="width: 50px;"></th>
+                            <th></th>
+                            <th>Source</th>
+                            <th>Added</th>
+                            <th>Time</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="recently-added-track-list">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
         <div id="page-local" class="page-content">
             <div class="custom-header">
                 <div>
@@ -1350,26 +1368,7 @@
                     <span class="view-all">View All</span>
                 </div>
                 <div class="grid-cards" id="weekly-top-grid">
-                    <div class="music-card"><img src="assets/images/imagine-dragons.png">
-                        <h4>Whatever It Takes</h4>
-                        <p>Imagine Dragons</p>
-                    </div>
-                    <div class="music-card"><img src="assets/images/skyfall-1.png">
-                        <h4>Skyfall</h4>
-                        <p>Adele</p>
-                    </div>
-                    <div class="music-card"><img src="assets/images/eminem.png">
-                        <h4>Superman</h4>
-                        <p>Eminem</p>
-                    </div>
-                    <div class="music-card"><img src="assets/images/softcore.png">
-                        <h4>Softcore</h4>
-                        <p>The Neighbourhood</p>
-                    </div>
-                    <div class="music-card"><img src="assets/images/the-loneliest.png">
-                        <h4>The Loneliest</h4>
-                        <p>Måneskin</p>
-                    </div>
+                    <!-- Populated by JS -->
                 </div>
             </section>
 
@@ -1379,26 +1378,7 @@
                     <span class="view-all">View All</span>
                 </div>
                 <div class="trending-list" id="trending-list-container">
-                    <div class="trending-row">
-                        <span class="rank">#1</span>
-                        <img src="assets/images/softcore.png">
-                        <div style="margin-left:15px;">
-                            <h4>Softcore</h4>
-                            <p style="color:#888; font-size:12px;">The Neighbourhood</p>
-                        </div>
-                        <span>Nov 4, 2023</span><span>Hard to Imagine</span><span>3:26</span>
-                        <span class="material-icons-outlined" style="color:var(--accent-pink);">favorite</span>
-                    </div>
-                    <div class="trending-row">
-                        <span class="rank">#2</span>
-                        <img src="assets/images/skyfall-1.png">
-                        <div style="margin-left:15px;">
-                            <h4>Skyfall Beats</h4>
-                            <p style="color:#888; font-size:12px;">Nightmares</p>
-                        </div>
-                        <span>Oct 26, 2023</span><span>Skyfall</span><span>2:45</span>
-                        <span class="material-icons-outlined">favorite_border</span>
-                    </div>
+                    <!-- Populated by JS -->
                 </div>
             </section>
         </div>

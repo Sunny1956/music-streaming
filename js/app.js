@@ -71,24 +71,32 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadSongs() {
         try {
             let supabaseSongs = [];
-            if (typeof window.supabaseClient !== 'undefined') {
-                const { data, error } = await window.supabaseClient.from('songs').select('*');
-                if (!error && data && data.length > 0) {
-                    supabaseSongs = data;
-                }
-            }
-            
             let localSongsList = [];
+
+            // Fetch from Supabase
+            if (typeof window.supabaseClient !== 'undefined') {
+                try {
+                    const { data, error } = await window.supabaseClient.from('songs').select('*');
+                    if (!error && data) supabaseSongs = data;
+                } catch (e) { console.warn('Supabase songs fetch failed:', e.message); }
+            }
+
             try {
                 const res = await fetch('/api/songs');
                 localSongsList = await res.json();
-            } catch (e) {
-                console.error('Local API fetch failed:', e);
+            } catch (e) { console.warn('Local API fetch failed:', e.message); }
+
+            // Merge both, deduplicate by file URL
+            const merged = [...supabaseSongs];
+            const existingFiles = new Set(merged.map(s => s.file));
+            for (const song of localSongsList) {
+                if (!existingFiles.has(song.file)) {
+                    merged.push(song);
+                    existingFiles.add(song.file);
+                }
             }
 
-            // Use supabase if available, otherwise local API
-            songs = [...supabaseSongs, ...(localSongsList || [])];
-            
+            songs = merged;
             renderHome(songs);
         } catch (err) {
             console.error('Failed to load songs:', err);
@@ -143,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <span style="flex:1;">Added recently</span>
                     <span style="flex:1;">Single</span>
-                    <span style="width:50px;">3:00</span>
+                    <span style="width:50px;">\u2014</span>
                     ${getIconsHtml(song)}
                 `;
                 trendingList.appendChild(row);
@@ -211,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td>Added recently</td>
                     <td>${thirdColText}</td>
-                    <td>3:00</td>
+                    <td>\u2014</td>
                     <td>${getIconsHtml(song)}</td>
                 `;
                 return row;
@@ -249,24 +257,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /* =========================
-       FAVORITES — Supabase
-    ========================= */
+
+    function saveFavoritesLocal() {
+        localStorage.setItem('melody_favorites', JSON.stringify(favorites));
+    }
+
     async function loadFavorites() {
-        if (typeof window.supabaseClient === 'undefined') return;
-        const { data: { user } } = await window.supabaseClient.auth.getUser();
-        if (!user) return;
-        const { data, error } = await window.supabaseClient
-            .from('favorites').select('*').eq('user_id', user.id);
-        if (!error && data) {
-            favorites = data.map(row => ({
-                file:   row.song_file,
-                title:  row.song_title,
-                artist: row.song_artist,
-                cover:  row.song_cover
-            }));
+        // 1. Load from localStorage first (instant)
+        const saved = localStorage.getItem('melody_favorites');
+        if (saved) {
+            try { favorites = JSON.parse(saved); } catch (e) { }
             renderHome(songs);
             renderFavorites();
+        }
+
+        // 2. Merge from Supabase if available
+        if (typeof window.supabaseClient !== 'undefined') {
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user) return;
+                const { data, error } = await window.supabaseClient
+                    .from('favorites').select('*').eq('user_id', user.id);
+                if (!error && data && data.length > 0) {
+                    let changed = false;
+                    for (const row of data) {
+                        if (!favorites.some(f => f.file === row.song_file)) {
+                            favorites.push({
+                                file: row.song_file, title: row.song_title,
+                                artist: row.song_artist, cover: row.song_cover
+                            });
+                            changed = true;
+                        }
+                    }
+                    if (changed) {
+                        saveFavoritesLocal();
+                        renderHome(songs);
+                        renderFavorites();
+                    }
+                }
+            } catch (err) {
+                console.warn('Supabase favorites sync skipped:', err.message);
+            }
         }
     }
 
@@ -274,29 +305,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const existing = favorites.findIndex(s => s.file === file);
         if (existing > -1) {
             favorites.splice(existing, 1);
-            if (typeof window.supabaseClient !== 'undefined') {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                if (user) await window.supabaseClient.from('favorites').delete()
-                    .eq('user_id', user.id).eq('song_file', file);
-            }
+            try {
+                if (typeof window.supabaseClient !== 'undefined') {
+                    const { data: { user } } = await window.supabaseClient.auth.getUser();
+                    if (user) await window.supabaseClient.from('favorites').delete()
+                        .eq('user_id', user.id).eq('song_file', file);
+                }
+            } catch (e) { console.warn('Supabase fav delete skipped:', e.message); }
         } else {
             const song = songs.find(s => s.file === file);
             if (song) {
                 favorites.push(song);
-                if (typeof window.supabaseClient !== 'undefined') {
-                    const { data: { user } } = await window.supabaseClient.auth.getUser();
-                    if (user) await window.supabaseClient.from('favorites').upsert({
-                        user_id:     user.id,
-                        song_file:   song.file,
-                        song_title:  song.title,
-                        song_artist: song.artist || 'Unknown',
-                        song_cover:  song.cover || ''
-                    }, { onConflict: 'user_id,song_file' });
-                }
+                try {
+                    if (typeof window.supabaseClient !== 'undefined') {
+                        const { data: { user } } = await window.supabaseClient.auth.getUser();
+                        if (user) await window.supabaseClient.from('favorites').upsert({
+                            user_id: user.id, song_file: song.file,
+                            song_title: song.title, song_artist: song.artist || 'Unknown',
+                            song_cover: song.cover || ''
+                        }, { onConflict: 'user_id,song_file' });
+                    }
+                } catch (e) { console.warn('Supabase fav add skipped:', e.message); }
             }
         }
+        saveFavoritesLocal();
         renderHome(songs);
         renderFavorites();
+        if (typeof window.renderRecentlyAdded === 'function') renderRecentlyAdded();
     };
 
     /* =========================
@@ -313,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         favorites.forEach((song, idx) => {
             const originalIndex = songs.findIndex(s => s.file === song.file);
-            const isFav = true;
 
             const row = document.createElement('tr');
             row.className = 'track-row';
@@ -332,61 +366,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td>Single</td>
                 <td>Added recently</td>
-                <td>3:00</td>
+                <td>\u2014</td>
                 <td><span class="material-icons-outlined" style="color: var(--accent-pink)" onclick="event.stopPropagation(); toggleFavorite('${song.file}')">favorite</span></td>
             `;
             container.appendChild(row);
         });
     };
 
-    window.createPlaylist = async function () {
-        if (typeof window.supabaseClient === 'undefined') {
-            alert("Supabase not initialized.");
-            return;
-        }
-        const { data: { user } } = await window.supabaseClient.auth.getUser();
-        if (!user) {
-            alert("Please login first to create playlists.");
-            return;
-        }
+    // Helper: save playlists to localStorage as backup
+    function savePlaylistsLocal() {
+        localStorage.setItem('melody_playlists', JSON.stringify(customPlaylists));
+    }
 
-        const name = "Playlist #" + (customPlaylists.length + 1);
-
-        const { data, error } = await window.supabaseClient
-            .from('playlists')
-            .insert({ user_id: user.id, name: name })
-            .select()
-            .single();
-
-        if (error || !data) {
-            console.error("Error creating playlist:", error);
-            alert("Failed to create playlist.");
-            return;
-        }
-
-        const newPlaylist = {
-            id: data.id,
-            name: data.name,
-            tracks: []
-        };
-        customPlaylists.push(newPlaylist);
-
-        // Add to sidebar
+    // Helper: add playlist to sidebar
+    function addPlaylistToSidebar(playlist) {
         const container = document.getElementById('custom-playlists-container');
+        if (!container) return;
         const item = document.createElement('div');
         item.className = 'nav-item';
-        item.id = 'nav-' + newPlaylist.id;
-        item.innerHTML = `<span class="material-icons-outlined">queue_music</span> ${name}`;
+        item.id = 'nav-' + playlist.id;
+        item.innerHTML = `<span class="material-icons-outlined">queue_music</span> ${playlist.name}`;
         item.onclick = () => {
-            activePlaylistId = newPlaylist.id;
-            document.getElementById('active-playlist-title').textContent = name;
+            activePlaylistId = playlist.id;
+            document.getElementById('active-playlist-title').textContent = playlist.name;
             renderPlaylist();
             showPage('playlist');
         };
-        if (container) container.appendChild(item);
+        container.appendChild(item);
+    }
 
-        alert(`Playlist "${name}" created! To add songs, click the (+) icon that will now appear next to songs in the lists.`);
-        renderHome(songs); // re-render to show [+] buttons
+    window.createPlaylist = async function () {
+        const name = "Playlist #" + (customPlaylists.length + 1);
+        let playlistId = 'local_' + Date.now();
+
+        // Try Supabase
+        try {
+            if (typeof window.supabaseClient !== 'undefined') {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (user) {
+                    const { data, error } = await window.supabaseClient
+                        .from('playlists')
+                        .insert({ user_id: user.id, name: name })
+                        .select().single();
+                    if (!error && data) playlistId = data.id;
+                }
+            }
+        } catch (e) { console.warn('Supabase playlist create skipped:', e.message); }
+
+        const newPlaylist = { id: playlistId, name, tracks: [] };
+        customPlaylists.push(newPlaylist);
+        savePlaylistsLocal();
+        addPlaylistToSidebar(newPlaylist);
+
+        alert(`Playlist "${name}" created! Click the ⊕ icon on any song to add it.`);
+        renderHome(songs);
     };
 
     window.addToPlaylist = async function (file) {
@@ -402,80 +435,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const song = songs.find(s => s.file === file);
         if (song && !playlist.tracks.some(t => t.file === file)) {
-            // Add locally first for instant UI
             playlist.tracks.push(song);
+            savePlaylistsLocal();
             alert(`Added to ${playlist.name}!`);
             renderPlaylist();
+            renderHome(songs);
+            if (typeof window.renderRecentlyAdded === 'function') renderRecentlyAdded();
 
-            // Save to Supabase
-            if (typeof window.supabaseClient !== 'undefined') {
-                await window.supabaseClient.from('playlist_songs').insert({
-                    playlist_id: playlist.id,
-                    song_file: song.file,
-                    song_title: song.title,
-                    song_artist: song.artist || 'Unknown',
-                    song_cover: song.cover || ''
-                });
-            }
+            // Try Supabase sync
+            try {
+                if (typeof window.supabaseClient !== 'undefined') {
+                    await window.supabaseClient.from('playlist_songs').insert({
+                        playlist_id: playlist.id,
+                        song_file: song.file,
+                        song_title: song.title,
+                        song_artist: song.artist || 'Unknown',
+                        song_cover: song.cover || ''
+                    });
+                }
+            } catch (e) { console.warn('Supabase playlist sync skipped:', e.message); }
         } else {
             alert("Song already in playlist.");
         }
     };
-    
-    async function loadPlaylists() {
-        if (typeof window.supabaseClient === 'undefined') return;
-        const { data: { user } } = await window.supabaseClient.auth.getUser();
-        if (!user) return;
 
-        // Fetch playlists
-        const { data: playlistsData, error: pError } = await window.supabaseClient
-            .from('playlists')
-            .select('*')
-            .eq('user_id', user.id);
-            
-        if (!pError && playlistsData) {
-            customPlaylists = playlistsData.map(p => ({
-                id: p.id,
-                name: p.name,
-                tracks: []
-            }));
+    function loadPlaylists() {
+        // 1. Load from localStorage first (instant, always works)
+        const saved = localStorage.getItem('melody_playlists');
+        if (saved) {
+            try {
+                customPlaylists = JSON.parse(saved);
+                const container = document.getElementById('custom-playlists-container');
+                if (container) container.innerHTML = '';
+                customPlaylists.forEach(p => addPlaylistToSidebar(p));
+            } catch (e) { console.warn('Bad localStorage playlists:', e); }
+        }
 
-            // Render sidebar
-            const container = document.getElementById('custom-playlists-container');
-            if (container) container.innerHTML = '';
-            customPlaylists.forEach(playlist => {
-                const item = document.createElement('div');
-                item.className = 'nav-item';
-                item.id = 'nav-' + playlist.id;
-                item.innerHTML = `<span class="material-icons-outlined">queue_music</span> ${playlist.name}`;
-                item.onclick = () => {
-                    activePlaylistId = playlist.id;
-                    document.getElementById('active-playlist-title').textContent = playlist.name;
-                    renderPlaylist();
-                    showPage('playlist');
-                };
-                if (container) container.appendChild(item);
-            });
+        // 2. Also try Supabase (merge any cloud playlists)
+        if (typeof window.supabaseClient !== 'undefined') {
+            (async () => {
+                try {
+                    const { data: { user } } = await window.supabaseClient.auth.getUser();
+                    if (!user) return;
 
-            // Fetch playlist songs
-            const { data: songsData, error: sError } = await window.supabaseClient
-                .from('playlist_songs')
-                .select('*');
-                
-            if (!sError && songsData) {
-                // Group songs by playlist_id
-                songsData.forEach(row => {
-                    const playlist = customPlaylists.find(p => p.id === row.playlist_id);
-                    if (playlist) {
-                        playlist.tracks.push({
-                            file: row.song_file,
-                            title: row.song_title,
-                            artist: row.song_artist,
-                            cover: row.song_cover
+                    const { data: playlistsData, error: pError } = await window.supabaseClient
+                        .from('playlists').select('*').eq('user_id', user.id);
+                    if (pError || !playlistsData) return;
+
+                    let changed = false;
+                    for (const p of playlistsData) {
+                        if (!customPlaylists.find(cp => cp.id === p.id)) {
+                            const pl = { id: p.id, name: p.name, tracks: [] };
+                            customPlaylists.push(pl);
+                            addPlaylistToSidebar(pl);
+                            changed = true;
+                        }
+                    }
+
+                    const { data: songsData, error: sError } = await window.supabaseClient
+                        .from('playlist_songs').select('*');
+                    if (!sError && songsData) {
+                        songsData.forEach(row => {
+                            const pl = customPlaylists.find(p => p.id === row.playlist_id);
+                            if (pl && !pl.tracks.some(t => t.file === row.song_file)) {
+                                pl.tracks.push({
+                                    file: row.song_file, title: row.song_title,
+                                    artist: row.song_artist, cover: row.song_cover
+                                });
+                                changed = true;
+                            }
                         });
                     }
-                });
-            }
+                    if (changed) savePlaylistsLocal();
+                } catch (err) {
+                    console.warn('Supabase playlists sync skipped:', err.message);
+                }
+            })();
         }
     }
 
@@ -516,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td>${playlist.name}</td>
                 <td>Just now</td>
-                <td>3:00</td>
+                <td>\u2014</td>
                 <td><span class="material-icons-outlined" style="color: ${isFav ? 'var(--accent-pink)' : '#888'}" onclick="event.stopPropagation(); toggleFavorite('${song.file}')">${isFav ? 'favorite' : 'favorite_border'}</span></td>
             `;
             container.appendChild(row);
@@ -649,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (largePlayBtn) largePlayBtn.innerHTML = isPlaying ? '<span class="material-icons">pause</span>' : '<span class="material-icons">play_arrow</span>';
     }
 
-    window.playSong = function(index) {
+    window.playSong = function (index) {
         if (!songs[index]) return;
         currentIndex = index;
         audio.src = songs[index].file;
@@ -658,7 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (playPromise !== undefined) {
             playPromise.then(() => syncUI()).catch(err => { console.warn('Playback error:', err); syncUI(); });
         }
-    }
+    };
 
     function togglePlay() {
         if (!audio.src && songs.length > 0) {
@@ -779,18 +814,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fetch initial data
-    loadSongs();
+    /* =========================
+       RECENTLY ADDED
+    ========================= */
+    window.renderRecentlyAdded = function () {
+        const container = document.getElementById('recently-added-track-list');
+        if (!container) return;
+        container.innerHTML = '';
+        if (songs.length === 0) {
+            container.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">No songs available yet.</td></tr>';
+            return;
+        }
+        // Show all songs as "recently added"
+        songs.forEach((song, idx) => {
+            const isFav = favorites.some(s => s.file === song.file);
+            const row = document.createElement('tr');
+            row.className = 'track-row';
+            row.style.cursor = 'pointer';
+            row.onclick = () => playSong(idx);
+            row.innerHTML = `
+                <td class="track-index">${idx + 1}</td>
+                <td>
+                    <div class="track-title-cell">
+                        <img src="${song.cover || 'assets/images/softcore.png'}" class="track-img" onerror="this.src='assets/images/softcore.png'">
+                        <div>
+                            <div class="track-name">${song.title}</div>
+                            <div class="track-artist">${song.artist || 'Unknown'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>Library</td>
+                <td>Recently</td>
+                <td>\u2014</td>
+                <td>
+                    <div style="display:flex; align-items:center;">
+                        <span class="material-icons-outlined" style="color: ${isFav ? 'var(--accent-pink)' : '#888'}; margin-right: 10px;" onclick="event.stopPropagation(); toggleFavorite('${song.file}')">${isFav ? 'favorite' : 'favorite_border'}</span>
+                        ${customPlaylists.length > 0 ? `<span class="material-icons-outlined" style="color: #888;" title="Add to Playlist" onclick="event.stopPropagation(); addToPlaylist('${song.file}')">add_circle_outline</span>` : ''}
+                    </div>
+                </td>
+            `;
+            container.appendChild(row);
+        });
+    };
 
-    // Initialize library features
+    /* =========================
+       INIT — Always load songs, then try Supabase features
+    ========================= */
+    // Always load songs and setup immediately
+    loadSongs().then(() => {
+        renderRecentlyAdded();
+    });
     setupLocalFiles();
     renderFavorites();
     renderLocalFiles();
 
-    // Load user's saved favorites from Supabase
+    // Try Supabase features (graceful — won't block if tables missing)
     loadFavorites();
-    
-    // Load user's saved playlists from Supabase
     loadPlaylists();
 });
 
