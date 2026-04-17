@@ -1,6 +1,8 @@
-// js/auth.js — Supabase-powered authentication with local fallback
+// js/auth.js — Supabase auth with instant local fallback
 
-/* SWITCH FORMS */
+/* ============================================================
+   FORM SWITCHING
+============================================================ */
 function showRegister() {
     document.getElementById("login-form").classList.add("hidden");
     document.getElementById("register-form").classList.remove("hidden");
@@ -20,120 +22,130 @@ function showMsg(msg, isError = false) {
     el.style.color = isError ? "#FF4444" : "#0E9EEF";
 }
 
-/* REGISTER USER — Supabase Auth */
+/* ============================================================
+   LOCAL STORAGE HELPERS
+============================================================ */
+function getLocalUsers() {
+    try { return JSON.parse(localStorage.getItem("local_users") || "[]"); } catch { return []; }
+}
+function setLocalUsers(users) {
+    localStorage.setItem("local_users", JSON.stringify(users));
+}
+function setLoggedIn(user) {
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("melody_user", JSON.stringify({ id: user.id, name: user.name, email: user.email }));
+}
+
+/* ============================================================
+   CHECK WHETHER SUPABASE IS REACHABLE (with 4s timeout)
+============================================================ */
+function isSupabaseAvailable() {
+    return new Promise((resolve) => {
+        if (typeof window.supabaseClient === 'undefined') return resolve(false);
+        const timer = setTimeout(() => resolve(false), 4000);
+        // A lightweight ping — just get session (no network for anon)
+        window.supabaseClient.auth.getSession()
+            .then(() => { clearTimeout(timer); resolve(true); })
+            .catch(() => { clearTimeout(timer); resolve(false); });
+    });
+}
+
+/* ============================================================
+   REGISTER
+============================================================ */
 async function registerUser() {
     const name = document.getElementById("reg-name").value.trim();
     const email = document.getElementById("reg-email").value.trim();
     const password = document.getElementById("reg-password").value;
 
-    if (!email || !password || !name) {
-        showMsg("Please fill all fields", true);
-        return;
-    }
+    if (!email || !password || !name) { showMsg("Please fill all fields", true); return; }
+    if (password.length < 6) { showMsg("Password must be at least 6 characters", true); return; }
 
     showMsg("Creating account...");
 
-    try {
-        const { data, error } = await window.supabaseClient.auth.signUp({
-            email,
-            password,
-            options: { data: { full_name: name } }
-        });
-
-        if (error) {
-            // If the error is network-related, fallback to local storage
-            if (error.message && error.message.toLowerCase().includes("network") || error.message.toLowerCase().includes("failed to fetch")) {
-                console.error("Supabase signUp network error, falling back to local storage", error);
-                fallbackRegister(name, email, password);
-            } else {
-                showMsg(error.message, true);
+    // Try Supabase if available
+    const supabaseOk = await isSupabaseAvailable();
+    if (supabaseOk) {
+        try {
+            const { data, error } = await window.supabaseClient.auth.signUp({
+                email, password,
+                options: { data: { full_name: name } }
+            });
+            if (!error) {
+                showMsg("Account created! You can now log in.");
+                setTimeout(() => showLogin(), 1500);
+                return;
             }
-            return;
-        }
-
-        showMsg("Account created! Please check your email to confirm, then login.");
-        setTimeout(() => showLogin(), 2000);
-    } catch (err) {
-        // Unexpected error, fallback as well
-        console.error("Supabase signUp failed, falling back to local storage", err);
-        fallbackRegister(name, email, password);
+            // If email already exists in Supabase
+            if (error.message && error.message.toLowerCase().includes("already")) {
+                showMsg(error.message, true); return;
+            }
+        } catch (e) { /* Supabase failed, fall through to local */ }
     }
+
+    // LOCAL FALLBACK
+    fallbackRegister(name, email, password);
 }
 
-/* LOGIN USER — Supabase Auth */
+/* ============================================================
+   LOGIN
+============================================================ */
 async function loginUser() {
     const email = document.getElementById("login-email").value.trim();
     const password = document.getElementById("login-password").value;
 
-    if (!email || !password) {
-        showMsg("Please fill all fields", true);
-        return;
-    }
+    if (!email || !password) { showMsg("Please fill all fields", true); return; }
 
     showMsg("Logging in...");
 
-    try {
-        const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-
-        if (error) {
-            // Network-related error fallback
-            if (error.message && error.message.toLowerCase().includes("network") || error.message.toLowerCase().includes("failed to fetch")) {
-                console.error("Supabase login network error, falling back to local storage", error);
-                fallbackLogin(email, password);
-            } else {
-                showMsg(error.message, true);
+    // Try Supabase if available
+    const supabaseOk = await isSupabaseAvailable();
+    if (supabaseOk) {
+        try {
+            const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+            if (!error && data.user) {
+                setLoggedIn({
+                    id: data.user.id,
+                    name: data.user.user_metadata?.full_name || email.split('@')[0],
+                    email: data.user.email
+                });
+                showMsg("Login Successful! Redirecting...");
+                setTimeout(() => { window.location.href = "index.html"; }, 400);
+                return;
             }
-            return;
-        }
-
-        // Store session info
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("melody_user", JSON.stringify({
-            id: data.user.id,
-            name: data.user.user_metadata?.full_name || email.split('@')[0],
-            email: data.user.email
-        }));
-
-        showMsg("Login Successful! Redirecting...");
-        setTimeout(() => { window.location.href = "index.html"; }, 500);
-    } catch (err) {
-        console.error("Supabase login failed, falling back to local storage", err);
-        fallbackLogin(email, password);
+            // Wrong password on Supabase
+            if (error && error.message && !error.message.toLowerCase().includes("network") && !error.message.toLowerCase().includes("fetch")) {
+                showMsg(error.message, true); return;
+            }
+        } catch (e) { /* Supabase failed, fall through to local */ }
     }
+
+    // LOCAL FALLBACK
+    fallbackLogin(email, password);
 }
 
-/* ---------- LOCAL FALLBACK IMPLEMENTATION ---------- */
-function getLocalUsers() {
-    const usersJson = localStorage.getItem("local_users");
-    return usersJson ? JSON.parse(usersJson) : [];
-}
-
-function setLocalUsers(users) {
-    localStorage.setItem("local_users", JSON.stringify(users));
-}
-
+/* ============================================================
+   LOCAL FALLBACK IMPLEMENTATIONS
+============================================================ */
 function fallbackRegister(name, email, password) {
     const users = getLocalUsers();
     if (users.find(u => u.email === email)) {
-        showMsg("Email already registered", true);
-        return;
+        showMsg("Email already registered. Please log in.", true); return;
     }
-    const newUser = { id: Date.now().toString(), name, email, password };
+    const newUser = { id: "local_" + Date.now(), name, email, password };
     users.push(newUser);
     setLocalUsers(users);
-    showMsg("Account created locally! You can now log in.");
-    setTimeout(() => showLogin(), 2000);
+    showMsg("Account created! You can now log in.");
+    setTimeout(() => showLogin(), 1500);
 }
 
 function fallbackLogin(email, password) {
     const users = getLocalUsers();
     const user = users.find(u => u.email === email && u.password === password);
     if (!user) {
-        showMsg("Invalid credentials (local fallback)", true);
-        return;
+        showMsg("Invalid email or password", true); return;
     }
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("melody_user", JSON.stringify({ id: user.id, name: user.name, email: user.email }));
-    showMsg("Login Successful (local fallback)! Redirecting...");
-    setTimeout(() => { window.location.href = "index.html"; }, 500);
+    setLoggedIn(user);
+    showMsg("Login Successful! Redirecting...");
+    setTimeout(() => { window.location.href = "index.html"; }, 400);
 }

@@ -6,6 +6,30 @@ let customPlaylists = [];
 let localSongs = [];
 let activePlaylistId = null;
 
+// Built-in fallback songs — used when Supabase AND local API both fail
+const FALLBACK_SONGS = [
+    { id:'f1', title:'Sunrise Drive',      artist:'Chillhop Collective',   file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',  cover:'https://images.unsplash.com/photo-1507878866276-a947ef722fee?w=400&q=60' },
+    { id:'f2', title:'Late Night',          artist:'Electronica',           file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',  cover:'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&q=60' },
+    { id:'f3', title:'Coastal Run',         artist:'Indie Waves',           file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',  cover:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=60' },
+    { id:'f4', title:'Neon Lights',         artist:'Synthwave City',        file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',  cover:'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&q=60' },
+    { id:'f5', title:'Acoustic Morning',    artist:'Sarah Strings',         file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',  cover:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=400&q=60' },
+    { id:'f6', title:'Midnight Drive',      artist:'Retro Racers',          file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',  cover:'https://images.unsplash.com/photo-1507802871141-8664188cf46f?w=400&q=60' },
+    { id:'f7', title:'Electric Soul',       artist:'Voltage Band',          file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',  cover:'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=60' },
+    { id:'f8', title:'Desert Wind',         artist:'Sandstorm DJ',          file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',  cover:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=60' },
+    { id:'f9', title:'City Pulse',          artist:'Urban Beats',           file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3',  cover:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&q=60' },
+    { id:'f10',title:'Forest Echo',         artist:'Nature Sounds',         file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3', cover:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&q=60' },
+    { id:'f11',title:'Space Journey',       artist:'Cosmic Flow',           file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3', cover:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=400&q=60' },
+    { id:'f12',title:'Rain Dance',          artist:'Tribal Groove',         file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3', cover:'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&q=60' },
+    { id:'f13',title:'Velvet Underground',  artist:'The Lounge Collective', file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3', cover:'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=60' },
+    { id:'f14',title:'Jazz Horizon',        artist:'Blue Note Trio',        file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3', cover:'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400&q=60' },
+    { id:'f15',title:'Summer Haze',         artist:'Beachside Boys',        file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3', cover:'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&q=60' },
+    { id:'f16',title:'Cold Nights',         artist:'Winter Vibes',          file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3', cover:'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=400&q=60' },
+    { id:'f17',title:'Fire & Ice',          artist:'Dual Nature',           file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',  cover:'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&q=60' },
+    { id:'f18',title:'Mountain High',       artist:'Alpine Track',          file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',  cover:'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=60' },
+    { id:'f19',title:'Ocean Deep',          artist:'Neptune Dive',          file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',  cover:'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&q=60' },
+    { id:'f20',title:'Starlight',           artist:'Galaxy Dreams',         file:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',  cover:'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=400&q=60' }
+];
+
 // Global showPage for HTML onclick attributes
 window.showPage = function (pageId) {
     const pages = document.querySelectorAll(".page-content");
@@ -73,20 +97,26 @@ document.addEventListener('DOMContentLoaded', () => {
             let supabaseSongs = [];
             let localSongsList = [];
 
-            // Fetch from Supabase
+            // 1. Try Supabase
             if (typeof window.supabaseClient !== 'undefined') {
                 try {
-                    const { data, error } = await window.supabaseClient.from('songs').select('*');
-                    if (!error && data) supabaseSongs = data;
-                } catch (e) { console.warn('Supabase songs fetch failed:', e.message); }
+                    const fetchPromise = window.supabaseClient.from('songs').select('*');
+                    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
+                    const { data, error } = await Promise.race([fetchPromise, timeout]);
+                    if (!error && data && data.length > 0) supabaseSongs = data;
+                } catch (e) { console.warn('[MelodyStream] Supabase songs fetch skipped:', e.message); }
             }
 
+            // 2. Try local API (/api/songs)
             try {
-                const res = await fetch('/api/songs');
-                localSongsList = await res.json();
-            } catch (e) { console.warn('Local API fetch failed:', e.message); }
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 5000);
+                const res = await fetch('/api/songs', { signal: controller.signal });
+                clearTimeout(timer);
+                if (res.ok) localSongsList = await res.json();
+            } catch (e) { console.warn('[MelodyStream] Local API fetch skipped:', e.message); }
 
-            
+            // 3. Merge, deduplicating by file URL
             const merged = [...supabaseSongs];
             const existingFiles = new Set(merged.map(s => s.file));
             for (const song of localSongsList) {
@@ -96,10 +126,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // 4. If still empty, use hardcoded fallback
+            if (merged.length === 0) {
+                console.warn('[MelodyStream] All song sources failed. Using built-in fallback.');
+                merged.push(...FALLBACK_SONGS);
+            }
+
             songs = merged;
             renderHome(songs);
         } catch (err) {
-            console.error('Failed to load songs:', err);
+            console.error('[MelodyStream] Failed to load songs:', err);
+            songs = [...FALLBACK_SONGS];
+            renderHome(songs);
         }
     }
 
