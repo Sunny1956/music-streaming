@@ -130,6 +130,30 @@ async function loginUser() {
 
     showMsg("Logging in...");
 
+    // ── ADMIN CHECK ─────────────────────────────────────────
+    // If credentials match admin, go straight to admin panel
+    if (email === 'admin' || email === 'admin@melody.com') {
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'admin', password })
+            });
+            const data = await res.json();
+            if (res.ok && data.token) {
+                localStorage.setItem('melody_admin_token', data.token);
+                showMsg("Admin access granted! Redirecting...");
+                setTimeout(() => { window.location.href = "admin.html"; }, 500);
+                return;
+            }
+            // Wrong admin password
+            showMsg("Invalid admin credentials", true); return;
+        } catch (e) {
+            showMsg("Cannot reach server", true); return;
+        }
+    }
+    // ────────────────────────────────────────────────────────
+
     // Try Supabase first
     const supabaseOk = await isSupabaseAvailable();
     if (supabaseOk) {
