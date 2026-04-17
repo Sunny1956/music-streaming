@@ -1,186 +1,728 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Melody Stream - Login & Sign-up</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-
+    <title>Melody Stream – Login & Sign Up</title>
+    <meta name="description" content="Sign in to MelodyStream — your personal music universe.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Vazirmatn', sans-serif;
+        /* ──────────────────────────────────────────
+           RESET & BASE
+        ────────────────────────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --pink:      #EE10B0;
+            --pink-dark: #C00D8F;
+            --blue:      #0E9EEF;
+            --bg:        #0d0d0d;
+            --surface:   #141414;
+            --surface2:  #1c1c1c;
+            --border:    rgba(255,255,255,0.08);
+            --text:      #ffffff;
+            --muted:     #888888;
+            --radius:    14px;
+            --transition: 0.65s cubic-bezier(0.77, 0, 0.175, 1);
         }
 
-        body {
-            background: #121212;
-            color: white;
+        html, body {
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* ──────────────────────────────────────────
+           WRAPPER — the split-screen container
+        ────────────────────────────────────────── */
+        .auth-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ──────────────────────────────────────────
+           BRAND PANEL (left 45%)
+        ────────────────────────────────────────── */
+        .brand-panel {
+            width: 45%;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: linear-gradient(145deg, #0a0a0a 0%, #180a14 40%, #0a1020 100%);
+            transition: background var(--transition);
         }
 
-        .auth-container {
-            background: #1E1E1E;
+        /* Animated gradient orbs */
+        .brand-panel::before {
+            content: '';
+            position: absolute;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(238,16,176,0.18) 0%, transparent 70%);
+            top: -100px; left: -100px;
+            animation: orb1 8s ease-in-out infinite alternate;
+        }
+        .brand-panel::after {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(14,158,239,0.14) 0%, transparent 70%);
+            bottom: -80px; right: -80px;
+            animation: orb2 10s ease-in-out infinite alternate;
+        }
+        @keyframes orb1 { from{transform:translate(0,0) scale(1)} to{transform:translate(60px,80px) scale(1.2)} }
+        @keyframes orb2 { from{transform:translate(0,0) scale(1)} to{transform:translate(-50px,-60px) scale(1.15)} }
+
+        /* Floating music notes */
+        .notes-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .note {
+            position: absolute;
+            font-size: 24px;
+            opacity: 0;
+            animation: floatNote linear infinite;
+            color: rgba(238,16,176,0.25);
+        }
+        .note:nth-child(even) { color: rgba(14,158,239,0.2); }
+        .note:nth-child(1)  { left:10%; animation-duration:9s;  animation-delay:0s;   font-size:18px; }
+        .note:nth-child(2)  { left:25%; animation-duration:12s; animation-delay:2s;   font-size:28px; }
+        .note:nth-child(3)  { left:40%; animation-duration:8s;  animation-delay:4s;   font-size:16px; }
+        .note:nth-child(4)  { left:60%; animation-duration:14s; animation-delay:1s;   font-size:22px; }
+        .note:nth-child(5)  { left:75%; animation-duration:10s; animation-delay:3s;   font-size:14px; }
+        .note:nth-child(6)  { left:88%; animation-duration:11s; animation-delay:5s;   font-size:26px; }
+        .note:nth-child(7)  { left:5%;  animation-duration:13s; animation-delay:6s;   font-size:20px; }
+        .note:nth-child(8)  { left:50%; animation-duration:7s;  animation-delay:2.5s; font-size:15px; }
+        @keyframes floatNote {
+            0%   { transform: translateY(110vh) rotate(0deg);   opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Brand content */
+        .brand-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
             padding: 40px;
-            border-radius: 15px;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .brand-content.hidden-content {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        .brand-logo-icon {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, var(--pink), var(--blue));
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 12px 30px rgba(238,16,176,0.35);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{box-shadow:0 12px 30px rgba(238,16,176,0.35)} 50%{box-shadow:0 12px 40px rgba(238,16,176,0.6)} }
+
+        .brand-logo-text {
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        /* Vinyl record */
+        .vinyl {
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(#1a1a1a, #2a2a2a, #1a1a1a, #2a2a2a, #1a1a1a);
+            margin: 0 auto 32px;
+            position: relative;
+            animation: spin 8s linear infinite;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.6);
+        }
+        .vinyl::before {
+            content: '';
+            position: absolute;
+            inset: 30px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--pink) 0%, var(--pink-dark) 30%, #1a0010 70%);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .vinyl::after {
+            content: '';
+            position: absolute;
+            inset: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.1);
+        }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        .auth-wrapper.signup-mode .vinyl { animation-direction: reverse; }
+
+        .brand-tagline h2 {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff, rgba(255,255,255,0.75));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .brand-tagline p {
+            font-size: 15px;
+            color: rgba(255,255,255,0.45);
+            line-height: 1.6;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        /* Vertical divider with glow */
+        .divider {
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, var(--pink), transparent);
+            opacity: 0.3;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* ──────────────────────────────────────────
+           FORM PANEL (right 55%)
+        ────────────────────────────────────────── */
+        .form-panel {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        /* Subtle grain background */
+        .form-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        /* Sliding forms track */
+        .forms-track {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            transition: transform var(--transition);
+        }
+        .auth-wrapper.signup-mode .forms-track {
+            transform: translateX(-50%);
+        }
+
+        /* Individual form panels */
+        .credentials-panel {
+            width: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .form-card {
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            border: 1px solid #333;
         }
 
-        h2 {
-            margin-bottom: 20px;
-            font-size: 28px;
-            color: #EE10B0;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
+        /* Form header */
+        .form-header { margin-bottom: 36px; }
+        .form-header .form-tag {
             font-size: 12px;
-            color: #aaa;
-            margin-bottom: 5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--pink);
+            margin-bottom: 10px;
         }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            background: #2A2A2A;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: white;
-            outline: none;
+        .form-header h2 {
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.1;
         }
-
-        .input-group input:focus {
-            border-color: #EE10B0;
-        }
-
-        .btn-main {
-            width: 100%;
-            padding: 12px;
-            background: #EE10B0;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-            font-size: 16px;
-        }
-
-        .btn-main:hover {
-            background: #d00e99;
-        }
-
-        .switch-text {
-            margin-top: 20px;
+        .form-header p {
             font-size: 14px;
-            color: #888;
+            color: var(--muted);
+            margin-top: 8px;
+            line-height: 1.5;
         }
 
-        .switch-text a {
-            color: #0E9EEF;
-            cursor: pointer;
-        }
-
-        .hidden {
+        /* Auth message */
+        #auth-msg {
+            min-height: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
             display: none;
         }
-    
-        @media (max-width: 480px) {
-            .auth-container {
-                height: 100vh;
-                max-width: 100%;
-                border-radius: 0;
-                border: none;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                padding: 30px 20px;
-                box-shadow: none;
-            }
+        #auth-msg.visible {
+            display: block;
+        }
+        #auth-msg.info  { background: rgba(14,158,239,0.1); color: var(--blue); border: 1px solid rgba(14,158,239,0.2); }
+        #auth-msg.error { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        #auth-msg.success { background: rgba(29,185,84,0.1); color: #4ade80; border: 1px solid rgba(29,185,84,0.2); }
+
+        /* ──────────────────────────────────────────
+           FLOATING LABEL FIELD
+        ────────────────────────────────────────── */
+        .field-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .field-wrapper input {
+            width: 100%;
+            padding: 18px 48px 8px 48px;
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+        }
+        .field-wrapper input:focus {
+            border-color: var(--pink);
+            background: rgba(28,28,28,0.9);
+            box-shadow: 0 0 0 4px rgba(238,16,176,0.08);
+        }
+        .field-wrapper input:valid + label,
+        .field-wrapper input:focus + label {
+            top: 10px;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            color: var(--pink);
+        }
+        .field-wrapper label {
+            position: absolute;
+            left: 48px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: var(--muted);
+            pointer-events: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .field-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 15px;
+            transition: color 0.2s;
+            pointer-events: none;
+        }
+        .field-wrapper:focus-within .field-icon { color: var(--pink); }
+
+        /* Password toggle */
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+        .toggle-password:hover { color: var(--text); }
+
+        /* ──────────────────────────────────────────
+           SUBMIT BUTTON
+        ────────────────────────────────────────── */
+        .submit-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+            border: none;
+            border-radius: var(--radius);
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .submit-button::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .submit-button:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(238,16,176,0.45); }
+        .submit-button:hover::after { opacity: 1; }
+        .submit-button:active { transform: translateY(0); }
+        .submit-button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* Divider line */
+        .form-divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 22px 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .form-divider::before,
+        .form-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
         }
 
+        /* Switch link */
+        .switch-link {
+            text-align: center;
+            font-size: 14px;
+            color: var(--muted);
+            margin-top: 24px;
+        }
+        .switch-link a {
+            color: var(--pink);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s, text-decoration 0.2s;
+            border-bottom: 1px solid transparent;
+        }
+        .switch-link a:hover { border-bottom-color: var(--pink); }
+
+        /* Footer */
+        .auth-footer {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.2);
+            margin-top: 32px;
+        }
+        .auth-footer a { color: rgba(255,255,255,0.3); text-decoration: none; }
+
+        /* ──────────────────────────────────────────
+           MOBILE — stack vertically
+        ────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            html, body { overflow: auto; height: auto; }
+            .auth-wrapper { flex-direction: column; height: auto; min-height: 100vh; overflow: visible; }
+
+            .brand-panel {
+                width: 100%;
+                padding: 50px 20px 40px;
+                min-height: auto;
+            }
+            .vinyl { width: 110px; height: 110px; }
+            .brand-logo-text { font-size: 24px; }
+            .brand-tagline h2 { font-size: 22px; }
+            .divider { width: 100%; height: 1px; }
+
+            .form-panel { width: 100%; overflow: hidden; }
+            .forms-track { height: auto; min-height: 100%; flex-direction: column; width: 100%; }
+            .auth-wrapper.signup-mode .forms-track { transform: translateY(-50%); }
+            .credentials-panel { width: 100%; padding: 40px 24px; }
+
+            /* On mobile stack, just switch height */
+            .forms-track { transition: none; }
+            .credentials-panel { min-height: auto; }
+        }
+
+        @media (max-width: 480px) {
+            .credentials-panel { padding: 32px 20px; }
+            .form-header h2 { font-size: 26px; }
+            .brand-panel { padding: 40px 20px 30px; }
+        }
     </style>
 </head>
-
 <body>
 
-    <div class="auth-container">
-        <div id="auth-msg" style="margin-bottom: 15px; font-size: 14px; font-weight: bold; min-height: 20px;"></div>
+<div class="auth-wrapper" id="auth-wrapper">
 
-        <!-- LOGIN -->
-        <div id="login-form">
+    <!-- ═══════════════════════════════
+         BRAND PANEL (left side)
+    ═══════════════════════════════ -->
+    <div class="brand-panel">
 
-            <h2>Login</h2>
-
-            <div class="input-group">
-                <label>Email</label>
-                <input type="email" id="login-email">
-            </div>
-
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="login-password">
-            </div>
-
-            <button class="btn-main" onclick="loginUser()">Login</button>
-
-            <p class="switch-text">
-                Don't have an account?
-                <a onclick="showRegister()">Sign Up</a>
-            </p>
-
+        <!-- Floating music notes -->
+        <div class="notes-container">
+            <span class="note">♪</span>
+            <span class="note">♫</span>
+            <span class="note">♩</span>
+            <span class="note">♬</span>
+            <span class="note">♪</span>
+            <span class="note">♫</span>
+            <span class="note">♩</span>
+            <span class="note">♬</span>
         </div>
 
-        <!-- REGISTER -->
-        <div id="register-form" class="hidden">
-
-            <h2>Register</h2>
-
-            <div class="input-group">
-                <label>Username</label>
-                <input type="text" id="reg-name">
+        <!-- LOGIN state content -->
+        <div class="brand-content" id="brand-signin">
+            <div class="brand-logo">
+                <div class="brand-logo-icon">🎵</div>
+                <span class="brand-logo-text">Melody</span>
             </div>
-
-            <div class="input-group">
-                <label>Email</label>
-                <input type="email" id="reg-email">
+            <div class="vinyl"></div>
+            <div class="brand-tagline">
+                <h2>WELCOME<br>BACK!</h2>
+                <p>Your music is waiting.<br>Pick up right where you left off.</p>
             </div>
+        </div>
 
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="reg-password">
+        <!-- REGISTER state content -->
+        <div class="brand-content hidden-content" id="brand-signup">
+            <div class="brand-logo">
+                <div class="brand-logo-icon">🎵</div>
+                <span class="brand-logo-text">Melody</span>
             </div>
-
-            <button class="btn-main" onclick="registerUser()">Sign Up</button>
-
-            <p class="switch-text">
-                Already have an account?
-                <a onclick="showLogin()">Login</a>
-            </p>
-
+            <div class="vinyl"></div>
+            <div class="brand-tagline">
+                <h2>JOIN THE<br>MUSIC!</h2>
+                <p>Create your free account and explore millions of tracks.</p>
+            </div>
         </div>
 
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/auth.js"></script>
+    <!-- Divider -->
+    <div class="divider"></div>
+
+    <!-- ═══════════════════════════════
+         FORM PANEL (right side)
+    ═══════════════════════════════ -->
+    <div class="form-panel">
+        <div class="forms-track" id="forms-track">
+
+            <!-- ── LOGIN FORM ── -->
+            <div class="credentials-panel" id="login-form">
+                <div class="form-card">
+                    <div class="form-header">
+                        <div class="form-tag">Welcome Back</div>
+                        <h2>Sign In</h2>
+                        <p>Enter your credentials to access your music library.</p>
+                    </div>
+
+                    <div id="auth-msg"></div>
+
+                    <div class="field-wrapper">
+                        <i class="field-icon fa-solid fa-envelope"></i>
+                        <input type="email" id="login-email" required autocomplete="email">
+                        <label>Email address</label>
+                    </div>
+
+                    <div class="field-wrapper">
+                        <i class="field-icon fa-solid fa-lock"></i>
+                        <input type="password" id="login-password" required autocomplete="current-password">
+                        <label>Password</label>
+                        <button type="button" class="toggle-password" onclick="togglePwd('login-password', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <button class="submit-button" onclick="handleLogin(this)" id="login-btn">
+                        Sign In
+                    </button>
+
+                    <div class="switch-link">
+                        Don't have an account? &nbsp;<a onclick="switchToSignup()">Create one free</a>
+                    </div>
+
+                    <div class="auth-footer">
+                        By continuing, you agree to MelodyStream's Terms of Service
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── REGISTER FORM ── -->
+            <div class="credentials-panel" id="register-form">
+                <div class="form-card">
+                    <div class="form-header">
+                        <div class="form-tag">New Here?</div>
+                        <h2>Create Account</h2>
+                        <p>Join millions of music lovers. It's completely free.</p>
+                    </div>
+
+                    <div class="field-wrapper">
+                        <i class="field-icon fa-solid fa-user"></i>
+                        <input type="text" id="reg-name" required autocomplete="name">
+                        <label>Your name</label>
+                    </div>
+
+                    <div class="field-wrapper">
+                        <i class="field-icon fa-solid fa-envelope"></i>
+                        <input type="email" id="reg-email" required autocomplete="email">
+                        <label>Email address</label>
+                    </div>
+
+                    <div class="field-wrapper">
+                        <i class="field-icon fa-solid fa-lock"></i>
+                        <input type="password" id="reg-password" required autocomplete="new-password">
+                        <label>Password (min. 6 characters)</label>
+                        <button type="button" class="toggle-password" onclick="togglePwd('reg-password', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <button class="submit-button" onclick="handleRegister(this)" id="register-btn">
+                        Create Account
+                    </button>
+
+                    <div class="switch-link">
+                        Already have an account? &nbsp;<a onclick="switchToLogin()">Sign in</a>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /forms-track -->
+    </div><!-- /form-panel -->
+
+</div><!-- /auth-wrapper -->
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+/* ──────────────────────────────────────────
+   PANEL SWITCHING (overrides auth.js stubs)
+────────────────────────────────────────── */
+function switchToSignup() {
+    document.getElementById('auth-wrapper').classList.add('signup-mode');
+    document.getElementById('brand-signin').classList.add('hidden-content');
+    document.getElementById('brand-signup').classList.remove('hidden-content');
+    clearMsg();
+}
+
+function switchToLogin() {
+    document.getElementById('auth-wrapper').classList.remove('signup-mode');
+    document.getElementById('brand-signup').classList.add('hidden-content');
+    document.getElementById('brand-signin').classList.remove('hidden-content');
+    clearMsg();
+}
+
+// Override auth.js functions so they trigger animation too
+window.showRegister = switchToSignup;
+window.showLogin    = switchToLogin;
+
+/* ──────────────────────────────────────────
+   MESSAGE DISPLAY
+────────────────────────────────────────── */
+function clearMsg() {
+    const el = document.getElementById('auth-msg');
+    el.className = '';
+    el.style.display = 'none';
+    el.textContent = '';
+}
+
+// Override auth.js showMsg to use styled version
+window.showMsg = function(msg, isError = false) {
+    const el = document.getElementById('auth-msg');
+    el.style.display = 'block';
+    el.textContent = msg;
+    if (isError) {
+        el.className = 'error visible';
+    } else if (msg.toLowerCase().includes('success') || msg.toLowerCase().includes('created')) {
+        el.className = 'success visible';
+    } else {
+        el.className = 'info visible';
+    }
+};
+
+/* ──────────────────────────────────────────
+   BUTTON WRAPPERS (loading state)
+────────────────────────────────────────── */
+async function handleLogin(btn) {
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+    try { await loginUser(); } catch(e) {}
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+}
+
+async function handleRegister(btn) {
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+    try { await registerUser(); } catch(e) {}
+    btn.disabled = false;
+    btn.textContent = 'Create Account';
+}
+
+/* ──────────────────────────────────────────
+   PASSWORD TOGGLE
+────────────────────────────────────────── */
+function togglePwd(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+    }
+}
+
+/* ──────────────────────────────────────────
+   ENTER KEY SUPPORT
+────────────────────────────────────────── */
+document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('login-btn').click();
+});
+document.getElementById('reg-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('register-btn').click();
+});
+</script>
 
 </body>
-
 </html>
