@@ -1,4 +1,42 @@
-// js/auth.js — Supabase auth with instant local fallback
+// js/auth.js — Supabase auth with local fallback + 30-day persistent session
+
+/* ============================================================
+   SESSION MANAGEMENT — persists across browser close/reopen
+============================================================ */
+const SESSION_KEY    = 'melody_session';
+const SESSION_DAYS   = 30; // stay logged in for 30 days
+
+function saveSession(user) {
+    const session = {
+        user,
+        expiresAt: Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    // Also set legacy key so index.html guard works
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('melody_user', JSON.stringify(user));
+}
+
+function clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('melody_user');
+}
+
+// Called by index.html guard — checks session validity
+window.checkSession = function() {
+    try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return false;
+        const session = JSON.parse(raw);
+        if (!session || !session.expiresAt) return !!localStorage.getItem('isLoggedIn');
+        if (Date.now() > session.expiresAt) {
+            clearSession();
+            return false;
+        }
+        return true;
+    } catch { return false; }
+};
 
 /* ============================================================
    FORM SWITCHING
@@ -31,10 +69,6 @@ function getLocalUsers() {
 function setLocalUsers(users) {
     localStorage.setItem("local_users", JSON.stringify(users));
 }
-function setLoggedIn(user) {
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("melody_user", JSON.stringify({ id: user.id, name: user.name, email: user.email }));
-}
 
 /* ============================================================
    CHECK WHETHER SUPABASE IS REACHABLE (with 4s timeout)
@@ -43,7 +77,6 @@ function isSupabaseAvailable() {
     return new Promise((resolve) => {
         if (typeof window.supabaseClient === 'undefined') return resolve(false);
         const timer = setTimeout(() => resolve(false), 4000);
-        // A lightweight ping — just get session (no network for anon)
         window.supabaseClient.auth.getSession()
             .then(() => { clearTimeout(timer); resolve(true); })
             .catch(() => { clearTimeout(timer); resolve(false); });
@@ -54,8 +87,8 @@ function isSupabaseAvailable() {
    REGISTER
 ============================================================ */
 async function registerUser() {
-    const name = document.getElementById("reg-name").value.trim();
-    const email = document.getElementById("reg-email").value.trim();
+    const name     = document.getElementById("reg-name").value.trim();
+    const email    = document.getElementById("reg-email").value.trim();
     const password = document.getElementById("reg-password").value;
 
     if (!email || !password || !name) { showMsg("Please fill all fields", true); return; }
@@ -63,7 +96,7 @@ async function registerUser() {
 
     showMsg("Creating account...");
 
-    // Try Supabase if available
+    // Try Supabase first
     const supabaseOk = await isSupabaseAvailable();
     if (supabaseOk) {
         try {
@@ -76,11 +109,10 @@ async function registerUser() {
                 setTimeout(() => showLogin(), 1500);
                 return;
             }
-            // If email already exists in Supabase
             if (error.message && error.message.toLowerCase().includes("already")) {
                 showMsg(error.message, true); return;
             }
-        } catch (e) { /* Supabase failed, fall through to local */ }
+        } catch (e) { /* Fall through to local */ }
     }
 
     // LOCAL FALLBACK
@@ -91,33 +123,34 @@ async function registerUser() {
    LOGIN
 ============================================================ */
 async function loginUser() {
-    const email = document.getElementById("login-email").value.trim();
+    const email    = document.getElementById("login-email").value.trim();
     const password = document.getElementById("login-password").value;
 
     if (!email || !password) { showMsg("Please fill all fields", true); return; }
 
     showMsg("Logging in...");
 
-    // Try Supabase if available
+    // Try Supabase first
     const supabaseOk = await isSupabaseAvailable();
     if (supabaseOk) {
         try {
             const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
             if (!error && data.user) {
-                setLoggedIn({
+                const user = {
                     id: data.user.id,
                     name: data.user.user_metadata?.full_name || email.split('@')[0],
                     email: data.user.email
-                });
+                };
+                saveSession(user);
                 showMsg("Login Successful! Redirecting...");
                 setTimeout(() => { window.location.href = "index.html"; }, 400);
                 return;
             }
-            // Wrong password on Supabase
-            if (error && error.message && !error.message.toLowerCase().includes("network") && !error.message.toLowerCase().includes("fetch")) {
+            // Wrong password (not a network error)
+            if (error && !error.message.toLowerCase().includes("network") && !error.message.toLowerCase().includes("fetch")) {
                 showMsg(error.message, true); return;
             }
-        } catch (e) { /* Supabase failed, fall through to local */ }
+        } catch (e) { /* Fall through to local */ }
     }
 
     // LOCAL FALLBACK
@@ -125,7 +158,7 @@ async function loginUser() {
 }
 
 /* ============================================================
-   LOCAL FALLBACK IMPLEMENTATIONS
+   LOCAL FALLBACK
 ============================================================ */
 function fallbackRegister(name, email, password) {
     const users = getLocalUsers();
@@ -142,10 +175,8 @@ function fallbackRegister(name, email, password) {
 function fallbackLogin(email, password) {
     const users = getLocalUsers();
     const user = users.find(u => u.email === email && u.password === password);
-    if (!user) {
-        showMsg("Invalid email or password", true); return;
-    }
-    setLoggedIn(user);
+    if (!user) { showMsg("Invalid email or password", true); return; }
+    saveSession({ id: user.id, name: user.name, email: user.email });
     showMsg("Login Successful! Redirecting...");
     setTimeout(() => { window.location.href = "index.html"; }, 400);
 }

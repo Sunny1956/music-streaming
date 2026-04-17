@@ -55,11 +55,13 @@ window.showPage = function (pageId) {
 };
 
 window.logout = async function () {
-    if (typeof window.supabaseClient !== 'undefined') await window.supabaseClient.auth.signOut();
+    if (typeof window.supabaseClient !== 'undefined') await window.supabaseClient.auth.signOut().catch(() => {});
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("melody_user");
+    localStorage.removeItem("melody_session");
     window.location.href = "auth.html";
 };
+
 
 document.addEventListener('DOMContentLoaded', () => {
 

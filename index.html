@@ -7,9 +7,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Melody Stream</title>
     <script>
-        if (localStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "auth.html";
-        }
+        // Check session with expiry (30-day persistent login)
+        (function() {
+            try {
+                var raw = localStorage.getItem('melody_session');
+                if (raw) {
+                    var s = JSON.parse(raw);
+                    if (s && s.expiresAt && Date.now() < s.expiresAt) return; // valid session
+                    // Expired — clear and redirect
+                    localStorage.removeItem('melody_session');
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('melody_user');
+                    window.location.href = 'auth.html'; return;
+                }
+                // Legacy check
+                if (localStorage.getItem('isLoggedIn') !== 'true') {
+                    window.location.href = 'auth.html';
+                }
+            } catch(e) { window.location.href = 'auth.html'; }
+        })();
     </script>
 
     <link
