@@ -107,8 +107,23 @@ app.post('/api/login', (req, res) => {
 
 // Avoid port binding conflict in Vercel
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  const os = require('os');
+  app.listen(PORT, '0.0.0.0', () => {
+    // Get local network IP so other devices can connect
+    const interfaces = os.networkInterfaces();
+    let localIP = 'localhost';
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          localIP = iface.address;
+          break;
+        }
+      }
+      if (localIP !== 'localhost') break;
+    }
+    console.log(`Server running on:`);
+    console.log(`  Local:   http://localhost:${PORT}`);
+    console.log(`  Network: http://${localIP}:${PORT}  <-- Use this on other devices`);
   });
 }
 

@@ -7,7 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Melody Stream</title>
     <script>
-        // Check if the user is logged in. If not, redirect to auth.html immediately.
         if (localStorage.getItem("isLoggedIn") !== "true") {
             window.location.href = "auth.html";
         }
@@ -48,7 +47,6 @@
             overflow-x: hidden;
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -73,7 +71,6 @@
             padding: 30px 20px;
             position: fixed;
             height: calc(100vh - 90px);
-            /* Leave room for player */
             border-right: 2px solid var(--accent-pink);
             box-shadow: 5px 0 20px rgba(238, 16, 176, 0.1);
             z-index: 100;

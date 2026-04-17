@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localSongsList = await res.json();
             } catch (e) { console.warn('Local API fetch failed:', e.message); }
 
-            // Merge both, deduplicate by file URL
+            
             const merged = [...supabaseSongs];
             const existingFiles = new Set(merged.map(s => s.file));
             for (const song of localSongsList) {
